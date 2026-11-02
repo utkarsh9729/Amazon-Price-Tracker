@@ -20,7 +20,7 @@ const {
   CONFIG,
 } = require("./price-monitor");
 
-let intervalMinutes = parseInt(process.env.CRON_INTERVAL_MIN || "15", 10);
+let intervalMinutes = parseInt(process.env.CRON_INTERVAL_MIN || "5", 10);
 let isPaused = false;
 let isRunningJob = false;
 let nextRunTime = new Date(Date.now() + intervalMinutes * 60 * 1000);
