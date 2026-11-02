@@ -65,8 +65,8 @@ const CONFIG = {
   // Delays (ms) between Search API waves
   betweenBatchDelay: 300,
 
-  // Max history entries retained per product
-  maxHistoryEntries: 200,
+  // Max history entries retained per product (keep only last 10 prices)
+  maxHistoryEntries: 10,
 
   // Minimum historical data points before average-based alert triggers
   minDataPointsForAlert: 2,
@@ -115,6 +115,13 @@ function loadData() {
  * Save updated price data to JSON file.
  */
 function saveData(data) {
+  if (data && data.products) {
+    for (const product of Object.values(data.products)) {
+      if (Array.isArray(product.history) && product.history.length > CONFIG.maxHistoryEntries) {
+        product.history = product.history.slice(-CONFIG.maxHistoryEntries);
+      }
+    }
+  }
   data.lastRun = new Date().toISOString();
   data.runCount = (data.runCount || 0) + 1;
   fs.writeFileSync(CONFIG.dataFile, JSON.stringify(data, null, 2), "utf-8");
