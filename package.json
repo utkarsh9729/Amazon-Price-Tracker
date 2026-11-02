@@ -1,0 +1,20 @@
+{
+  "name": "price-errors",
+  "version": "1.0.0",
+  "description": "Amazon.in Price Error Detector — monitors products for pricing errors and sends Telegram alerts.",
+  "main": "price-monitor.js",
+  "scripts": {
+    "monitor": "node price-monitor.js",
+    "monitor:loop": "node price-monitor.js --loop --interval 5",
+    "cron": "node telegram-cron.js",
+    "harvest": "node harvest-500.js",
+    "test": "node price-monitor.js --test-telegram"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.64.1"
+  }
+}

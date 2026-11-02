@@ -1,0 +1,11 @@
+node_modules/
+browser-data/
+.playwright-mcp/
+scratch/
+.agents/
+.vscode/
+.mcp.json
+mcp_config.json
+playwright-mcp.config.json
+*.log
+
