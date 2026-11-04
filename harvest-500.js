@@ -1118,6 +1118,60 @@ const CATEGORIES = [
       "solar inverter hybrid",
     ],
   },
+  {
+    name: "hdd",
+    target: 250,
+    queries: [
+      "external hard disk drive 1tb 2tb",
+      "internal desktop hdd 3.5 inch sata",
+      "laptop internal hard drive 2.5 inch",
+      "seagate western digital wd toshiba hdd",
+      "4tb 5tb portable external hard disk",
+      "surveillance cctv hard disk drive",
+      "nas hard drive ironwolf wd red",
+      "usb 3.0 external hard drive backup",
+      "desktop internal hard disk 1tb 2tb 4tb",
+      "external hdd shockproof case",
+      "hard disk enclosure 2.5 3.5 sata usb",
+      "gaming external hard drive ps5 xbox",
+    ],
+  },
+  {
+    name: "ssd",
+    target: 250,
+    queries: [
+      "nvme m.2 pcie internal ssd",
+      "sata 2.5 inch internal ssd",
+      "gen4 nvme m.2 ssd 1tb 2tb",
+      "500gb 512gb internal ssd laptop",
+      "samsung wd black crucial kingston nvme ssd",
+      "adata xpg lexar silicon power teamgroup ssd",
+      "evm consistent zebronics ant esports ssd",
+      "ps5 heatsink m.2 nvme ssd",
+      "portable usb 3.2 type c ssd",
+      "256gb sata m.2 internal ssd",
+      "4tb high speed nvme ssd",
+      "msata mini pcie internal ssd",
+    ],
+  },
+  {
+    name: "ram",
+    target: 250,
+    queries: [
+      "ddr4 desktop ram 8gb 16gb 3200mhz",
+      "ddr5 desktop gaming ram 16gb 32gb",
+      "laptop sodimm ddr4 ram 8gb 16gb",
+      "laptop sodimm ddr5 ram 16gb 32gb",
+      "corsair vengeance g.skill trident z rgb ram",
+      "crucial kingston fury xpg adata gaming ram",
+      "teamgroup patriot silicon power desktop ram",
+      "evm consistent hynix samsung laptop ram",
+      "3600mhz cl16 cl18 gaming ddr4 ram",
+      "6000mhz 5600mhz ddr5 rgb ram kit",
+      "ddr3 8gb 4gb 1600mhz desktop laptop ram",
+      "32gb kit 2x16gb dual channel ram",
+    ],
+  },
 ];
 
 const SORT_ORDERS = [
@@ -1167,7 +1221,7 @@ async function harvestCategory(
   const existingList = existingCategoryMap[cat.name] || [];
   for (const asin of existingList) {
     const p = globalProducts[asin];
-    if (p && p.currentPrice > 0 && !usedGlobalAsins.has(asin)) {
+    if (p && !usedGlobalAsins.has(asin)) {
       p.category = cat.name;
       collected.set(asin, p);
       usedGlobalAsins.add(asin);
