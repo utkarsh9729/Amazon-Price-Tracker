@@ -67,6 +67,7 @@ async function handleTelegramCommand(text) {
         `🟢 State: <b>${isPaused ? "PAUSED" : isRunningJob ? "RUNNING NOW" : "ACTIVE"}</b>\n` +
         `⏱️ Cron Interval: Every <b>${intervalMinutes} min</b>\n` +
         `📦 Monitored SKUs: <b>${(skuData.skus || []).length}</b> (${categoriesCount} categories)\n` +
+        `🎯 Rule: Discount &gt; <b>${CONFIG.minDiscountPercent}%</b> (No price rule)\n` +
         `🔄 Total Runs Logged: <b>${data.runCount || 0}</b>\n` +
         `🕒 Last Run: ${data.lastRun ? new Date(data.lastRun).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A"}\n` +
         `⏭️ Next Scheduled Run: ${isPaused ? "Paused" : nextRunTime.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`
@@ -105,10 +106,13 @@ async function executeScheduledRun(triggerSource = "Scheduled Cron") {
   isRunningJob = true;
   CONFIG.headless = true;
 
+  const skuData = loadSkus();
+  const totalSkus = (skuData.skus || []).length;
+
   console.log(`\n⏰ [${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}] Starting run (${triggerSource})...`);
   await sendTelegram(
     `🔄 <b>Cron Run Started</b> (${triggerSource})\n` +
-      `Checking 5,500 SKUs via Amazon Search API...`
+      `Checking ${totalSkus.toLocaleString("en-IN")} SKUs via Amazon Search API...`
   );
 
   const startMs = Date.now();
@@ -118,7 +122,7 @@ async function executeScheduledRun(triggerSource = "Scheduled Cron") {
     await sendTelegram(
       `✅ <b>Cron Run Completed in ${elapsedSec}s</b>\n` +
         `📦 SKUs Checked: <b>${Object.keys(data.products).length}</b>\n` +
-        `🚨 Price Errors (&ge;50% below historical JSON price): <b>${alerts.length}</b>\n` +
+        `🚨 Price Errors (&gt;${CONFIG.minDiscountPercent}% discount vs historical JSON price): <b>${alerts.length}</b>\n` +
         `⏭️ Next Run: ${new Date(Date.now() + intervalMinutes * 60 * 1000).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`
     );
   } catch (err) {
@@ -142,6 +146,10 @@ function scheduleNext() {
 }
 
 async function startCronDaemon() {
+  const skuData = loadSkus();
+  const totalSkus = (skuData.skus || []).length;
+  const totalCats = Object.keys(skuData.categories || {}).length;
+
   console.log("═══════════════════════════════════════════════════════════");
   console.log("  🤖 Telegram Cron Daemon Started (@Uk_discountbot)");
   console.log(`  ⏱️  Interval: Every ${intervalMinutes} minute(s)`);
@@ -150,7 +158,7 @@ async function startCronDaemon() {
 
   await sendTelegram(
     `🤖 <b>Amazon Price Error Cron Daemon Online!</b>\n\n` +
-      `📦 Tracking: <b>5,500 SKUs</b> (11 categories, &gt; ₹5,000)\n` +
+      `📦 Tracking: <b>${totalSkus.toLocaleString("en-IN")} SKUs</b> (${totalCats} categories, Discount &gt; ${CONFIG.minDiscountPercent}%)\n` +
       `⏱️ Schedule: Every <b>${intervalMinutes} minutes</b>\n\n` +
       `<b>Telegram Commands:</b>\n` +
       `• /status — Check cron &amp; SKU status\n` +

@@ -6,6 +6,8 @@
 // history and average prices in `price-data.json`, detect pricing errors, and
 // send instant alerts to a Telegram group.
 //
+// Rule: No minimum price rule; ONLY discount rule > 30% off.
+//
 // Reverse-Engineered Amazon Search API Details:
 //   Endpoint : POST https://www.amazon.in/s/query
 //   Query    : ?rh=p_78:ASIN1|ASIN2|... (batch exact-ASIN refinement, 0 ads)
@@ -40,15 +42,9 @@ const CONFIG = {
     "5420527489:AAE1F1DDhqaiUHCu-kHauFfqhgEhOlG0aMI",
   telegramChatId: process.env.TELEGRAM_CHAT_ID || "-1002197097024",
 
-  // Price error threshold: alert ONLY when currentPrice drops >= 50% below the
-  // historical average price saved in price-data.json (does NOT check MRP discount)
-  priceErrorThreshold: parseFloat(process.env.PRICE_ERROR_THRESHOLD || "0.50"),
-
-  // Minimum historical average price (saved in JSON) required for monitoring/alerting (> 5,000)
-  minHistoricalPrice: parseFloat(process.env.MIN_HISTORICAL_PRICE || "5000"),
-
-  // Soft warning threshold vs historical average price (logged to console)
-  softWarningThreshold: 0.75,
+  // Discount rule ONLY (all price thresholds/rules removed):
+  // Alert ONLY when discount is strictly > 30%
+  minDiscountPercent: parseFloat(process.env.MIN_DISCOUNT_PERCENT || "30"),
 
   // Data and SKU files
   dataFile: path.join(__dirname, "price-data.json"),
@@ -60,10 +56,10 @@ const CONFIG = {
 
   // Amazon Search API batch size (rh=p_78:ASIN1|ASIN2|... supports up to 16 ASINs per page)
   searchBatchSize: 15,
-  searchConcurrency: 8,
+  searchConcurrency: 12,
 
   // Delays (ms) between Search API waves
-  betweenBatchDelay: 300,
+  betweenBatchDelay: 150,
 
   // Max history entries retained per product (keep only last 10 prices)
   maxHistoryEntries: 10,
@@ -307,29 +303,6 @@ function buildAlertMessage(alert) {
 
 // ─── Reverse-Engineered Amazon Search API Client ────────────────────────────
 
-/**
- * Query Amazon.in's internal Search API (`POST /s/query`) inside the active
- * Playwright page context and parse the streaming `&&&`-delimited JSON chunks.
- *
- * How the reverse-engineered Search API works:
- * 1. Sends `POST https://www.amazon.in/s/query?rh=p_78:ASIN1|ASIN2|...`
- *    (or `?k=ASIN` for single-SKU fallback) with:
- *      Headers:
- *        Accept: text/html, application/xhtml+xml
- *        Content-Type: application/json
- *        X-Requested-With: XMLHttpRequest
- *      Body:
- *        {"customer-action": "query"}
- * 2. Amazon responds with `application/json-amazonui-streaming;charset=UTF-8`,
- *    where each chunk separated by `&&&` is a JSON array:
- *      ["dispatch", "data-search-metadata", { metadata: { qid, rid, totalResultCount, ... } }]
- *      ["dispatch", "data-main-slot:search-result-N", { asin: "B0...", index: N, html: "<div ...>" }]
- * 3. Each search-result chunk's HTML fragment contains the product title,
- *    exact price-to-pay (`data-csa-c-price-to-pay` and `.a-price .a-offscreen`),
- *    strike-through MRP (`.a-price[data-a-strike="true"] .a-offscreen`),
- *    deal badge (`.a-badge-text`), merchant ID (`data-csa-c-merchant-id`),
- *    ratings, and delivery info.
- */
 async function queryAmazonSearchApi(page, queryParams) {
   return await page.evaluate(async (qs) => {
     const response = await fetch(`/s/query?${qs}`, {
@@ -374,7 +347,6 @@ async function queryAmazonSearchApi(page, queryParams) {
         continue;
       }
 
-      // Match search result chunks: "data-main-slot:search-result-*"
       if (payload.asin && payload.html) {
         const doc = parser.parseFromString(payload.html, "text/html");
         const root = doc.querySelector('[data-component-type="s-search-result"]') || doc.body;
@@ -383,7 +355,6 @@ async function queryAmazonSearchApi(page, queryParams) {
           doc.querySelector(".AdHolder") !== null ||
           doc.querySelector('[data-component-type="sp-sponsored-result"]') !== null;
 
-        // Title (combine brand + product h2 if multiple h2s exist, e.g., fashion/watches)
         const h2List = [...doc.querySelectorAll('[data-cy="title-recipe"] h2, h2')];
         const titleParts = h2List
           .map(
@@ -394,7 +365,6 @@ async function queryAmazonSearchApi(page, queryParams) {
         const uniqueParts = [...new Set(titleParts)];
         const title = uniqueParts.length > 0 ? uniqueParts.join(" — ") : null;
 
-        // Price: check both data-csa-c-price-to-pay and .a-price:not([data-a-strike="true"]) .a-offscreen
         const csaPriceEl = doc.querySelector("[data-csa-c-price-to-pay]");
         const csaPrice = csaPriceEl?.getAttribute("data-csa-c-price-to-pay") || null;
 
@@ -410,13 +380,11 @@ async function queryAmazonSearchApi(page, queryParams) {
           csaPrice ||
           null;
 
-        // MRP (Strike-through price)
         const mrpEl = doc.querySelector(
           '.a-price[data-a-strike="true"] .a-offscreen'
         );
         const mrpText = mrpEl?.textContent?.trim() || null;
 
-        // Discount text e.g. "(14% off)"
         const priceRecipe = doc.querySelector('[data-cy="price-recipe"]');
         let discountText = null;
         if (priceRecipe) {
@@ -424,11 +392,9 @@ async function queryAmazonSearchApi(page, queryParams) {
           if (match) discountText = match[0];
         }
 
-        // Deal badge
         const badgeEl = doc.querySelector(".a-badge-text");
         const dealBadge = badgeEl?.textContent?.trim() || null;
 
-        // Merchant / Seller ID from Add-to-Cart action metadata
         const merchantEl =
           doc.querySelector("[data-csa-c-merchant-id]") ||
           doc.querySelector('input[name="merchantId"]');
@@ -437,15 +403,12 @@ async function queryAmazonSearchApi(page, queryParams) {
           merchantEl?.getAttribute("value") ||
           null;
 
-        // Rating & review count
         const ratingEl = doc.querySelector(".a-icon-alt");
         const rating = ratingEl?.textContent?.trim() || null;
 
-        // Image URL
         const imgEl = doc.querySelector("img.s-image");
         const imageUrl = imgEl?.getAttribute("src") || null;
 
-        // Delivery info
         const deliveryEl = doc.querySelector('[data-cy="delivery-recipe"]');
         const delivery = deliveryEl?.textContent?.replace(/\s+/g, " ")?.trim() || null;
 
@@ -474,19 +437,16 @@ async function queryAmazonSearchApi(page, queryParams) {
 
 /**
  * Fetch product pricing for a list of SKUs (ASINs) using the Amazon Search API.
- * Step 1: Batch query via `POST /s/query?rh=p_78:ASIN1|ASIN2|...` (returns exact ASINs, zero ads).
- * Step 2: For any SKU not returned in the batch refinement, fallback to `POST /s/query?k=ASIN`.
  */
 async function fetchSkusViaSearchApi(page, skus) {
   const resultsByAsin = new Map();
 
-  // Split SKUs into batches of 15 ASINs each
   const batches = [];
   for (let i = 0; i < skus.length; i += CONFIG.searchBatchSize) {
     batches.push(skus.slice(i, i + CONFIG.searchBatchSize));
   }
 
-  const concurrency = CONFIG.searchConcurrency || 8;
+  const concurrency = CONFIG.searchConcurrency || 12;
   const totalBatches = batches.length;
 
   for (let w = 0; w < totalBatches; w += concurrency) {
@@ -521,7 +481,9 @@ async function fetchSkusViaSearchApi(page, skus) {
       }
     }
 
-    console.log(`   ✅ Wave returned prices for ${waveFound} SKU(s) (total collected: ${resultsByAsin.size}/${skus.length})`);
+    console.log(
+      `   ✅ Wave returned prices for ${waveFound} SKU(s) (total collected: ${resultsByAsin.size}/${skus.length})`
+    );
 
     if (w + concurrency < totalBatches) {
       await page.waitForTimeout(CONFIG.betweenBatchDelay);
@@ -574,7 +536,7 @@ async function runMonitor(options = {}) {
   console.log("  🛒 Amazon.in Price Error Detector (Search API Engine)");
   console.log(`  📦 Monitoring ${skus.length} SKU(s)`);
   console.log(
-    `  🎯 Error Threshold: <= ${(CONFIG.priceErrorThreshold * 100).toFixed(0)}% of Avg Price`
+    `  🎯 Discount Rule: > ${CONFIG.minDiscountPercent}% off (No minimum price rule)`
   );
   console.log(
     `  ⏰ ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`
@@ -608,7 +570,6 @@ async function runMonitor(options = {}) {
   let skippedCount = 0;
 
   try {
-    // Establish origin session on amazon.in so Search API (/s/query) has valid cookies/CSRF context
     console.log("🌐 Establishing Amazon.in session...");
     await page.goto("https://www.amazon.in/", {
       waitUntil: "domcontentloaded",
@@ -623,17 +584,12 @@ async function runMonitor(options = {}) {
       console.log(`   👤 Session status: ${accountText.trim()}`);
     }
 
-    // Query all SKUs using the reverse-engineered Amazon Search API
     const searchResults = await fetchSkusViaSearchApi(page, skus);
 
-    // Process each SKU result, update history & average price, and check for price errors
     for (let i = 0; i < skus.length; i++) {
       const asin = skus[i];
-      console.log(`\n── [${i + 1}/${skus.length}] SKU: ${asin} ──────────────────────────────`);
-
       const result = searchResults.get(asin);
       if (!result) {
-        console.log(`   ⚠️  No result returned from Search API for ${asin}`);
         skippedCount++;
         continue;
       }
@@ -661,11 +617,9 @@ async function runMonitor(options = {}) {
 
       const product = data.products[asin];
 
-      // Compute prior average BEFORE pushing current price (so a sudden drop is compared fairly)
       const priorAvg = calculateAverage(product.history);
       const priorCount = product.history.length;
 
-      // Update product metadata
       if (result.title) product.title = result.title;
       if (result.mrp) product.mrp = result.mrp;
       product.currentPrice = result.currentPrice;
@@ -675,17 +629,13 @@ async function runMonitor(options = {}) {
       product.imageUrl = result.imageUrl;
       product.lastChecked = result.scrapedAt;
 
-      console.log(`   📦 ${product.title?.substring(0, 72) || asin}`);
-
       if (result.unavailable || result.currentPrice == null) {
-        console.log(`   ⏭️  Currently unavailable / no price listed in search`);
         skippedCount++;
         continue;
       }
 
       checkedCount++;
 
-      // Append current price check to history
       product.history.push({
         price: result.currentPrice,
         mrp: result.mrp,
@@ -699,7 +649,6 @@ async function runMonitor(options = {}) {
         product.history = product.history.slice(-CONFIG.maxHistoryEntries);
       }
 
-      // Update average, median, min, max in JSON data
       product.averagePrice = calculateAverage(product.history);
       product.medianPrice = calculateMedian(product.history);
       const minMax = calculateMinMax(product.history);
@@ -710,30 +659,27 @@ async function runMonitor(options = {}) {
       const avg = product.averagePrice;
       const comparisonAvg = priorAvg ?? avg;
 
-      console.log(
-        `   💰 Current: ${formatPrice(cur)} | Avg: ${formatPrice(avg)} | MRP: ${formatPrice(product.mrp)}${result.dealBadge ? ` | 🏷️ ${result.dealBadge}` : ""}`
-      );
-      console.log(
-        `   📊 Median: ${formatPrice(product.medianPrice)} | Range: ${formatPrice(minMax.min)}–${formatPrice(minMax.max)} (${product.history.length} run(s))`
-      );
-
-      // ── Detect Price Error (Strictly from Historical Price in price-data.json, NOT MRP) ──
+      // ── Detect Price Error (Only Discount Rule > 30%; No Price Rule) ──
       let isError = false;
       let errorReason = "";
 
       if (
         comparisonAvg != null &&
-        comparisonAvg > CONFIG.minHistoricalPrice &&
-        priorCount + 1 >= CONFIG.minDataPointsForAlert &&
-        cur <= comparisonAvg * CONFIG.priceErrorThreshold
+        comparisonAvg > 0 &&
+        priorCount + 1 >= CONFIG.minDataPointsForAlert
       ) {
-        const dropPct = (((comparisonAvg - cur) / comparisonAvg) * 100).toFixed(1);
-        isError = true;
-        errorReason = `Dropped ${dropPct}% below historical JSON price (${formatPrice(comparisonAvg)})`;
+        const dropPctNum = ((comparisonAvg - cur) / comparisonAvg) * 100;
+        if (dropPctNum > CONFIG.minDiscountPercent) {
+          const dropPct = dropPctNum.toFixed(1);
+          isError = true;
+          errorReason = `Discount ${dropPct}% (> ${CONFIG.minDiscountPercent}%) below historical JSON price (${formatPrice(comparisonAvg)})`;
+        }
       }
 
       if (isError) {
-        console.log(`   🚨 PRICE ERROR DETECTED: ${errorReason}`);
+        console.log(`\n🚨 [${asin}] PRICE ERROR DETECTED: ${errorReason}`);
+        console.log(`   📦 ${product.title?.substring(0, 72) || asin}`);
+        console.log(`   💰 Current: ${formatPrice(cur)} | Avg: ${formatPrice(avg)} | MRP: ${formatPrice(product.mrp)}`);
         product.alertCount = (product.alertCount || 0) + 1;
         errorCount++;
 
@@ -746,23 +692,15 @@ async function runMonitor(options = {}) {
           minMax,
           reason: errorReason,
         });
-      } else if (
-        comparisonAvg != null &&
-        cur <= comparisonAvg * CONFIG.softWarningThreshold
-      ) {
-        const dropPct = (((comparisonAvg - cur) / comparisonAvg) * 100).toFixed(1);
-        console.log(`   ⚡ Notable price drop: ${dropPct}% below average`);
       }
     }
   } finally {
     await context.close();
   }
 
-  // Save updated prices and average prices to price-data.json
   saveData(data);
   console.log(`\n💾 Updated prices & averages saved to ${CONFIG.dataFile}`);
 
-  // If --send-test-alert was passed and no real error occurred, send a sample alert for the first checked SKU
   if (forceTestAlert && alerts.length === 0) {
     const firstAsin = skus.find((a) => data.products[a]?.currentPrice != null);
     if (firstAsin) {
@@ -779,7 +717,6 @@ async function runMonitor(options = {}) {
     }
   }
 
-  // Send Telegram alerts for detected pricing errors
   if (alerts.length > 0) {
     console.log(`\n📱 Sending ${alerts.length} price error alert(s) to Telegram...`);
     for (const alert of alerts) {
@@ -896,7 +833,7 @@ async function main() {
     await sendTelegram(
       `✅ <b>Amazon.in Price Error Detector Connected!</b>\n\n` +
         `🔬 Engine: Reverse-Engineered Amazon Search API (<code>POST /s/query</code>)\n` +
-        `🎯 Threshold: Alert when price drops &le; ${(CONFIG.priceErrorThreshold * 100).toFixed(0)}% of average\n` +
+        `🎯 Rule: Alert when discount &gt; ${CONFIG.minDiscountPercent}% (No price rule)\n` +
         `⏰ ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`
     );
     return;
