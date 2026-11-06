@@ -6,7 +6,7 @@
 // history and average prices in `price-data.json`, detect pricing errors, and
 // send instant alerts to a Telegram group.
 //
-// Rule: No minimum price rule; ONLY discount rule > 30% off.
+// Rule: No minimum price rule; ONLY discount rule > 50% off.
 //
 // Reverse-Engineered Amazon Search API Details:
 //   Endpoint : POST https://www.amazon.in/s/query
@@ -43,8 +43,11 @@ const CONFIG = {
   telegramChatId: process.env.TELEGRAM_CHAT_ID || "-1002197097024",
 
   // Discount rule ONLY (all price thresholds/rules removed):
-  // Alert ONLY when discount is strictly > 30%
-  minDiscountPercent: parseFloat(process.env.MIN_DISCOUNT_PERCENT || "30"),
+  // Alert ONLY when discount is strictly > 50%
+  minDiscountPercent: parseFloat(process.env.MIN_DISCOUNT_PERCENT || "50"),
+
+  // Max alerts per same dropped price (don't trigger more than 2 times if price is unchanged)
+  maxAlertsPerSamePrice: 2,
 
   // Data and SKU files
   dataFile: path.join(__dirname, "price-data.json"),
@@ -611,6 +614,8 @@ async function runMonitor(options = {}) {
           history: [],
           lastChecked: null,
           alertCount: 0,
+          lastAlertPrice: null,
+          samePriceAlertCount: 0,
           firstSeen: new Date().toISOString(),
         };
       }
@@ -659,7 +664,7 @@ async function runMonitor(options = {}) {
       const avg = product.averagePrice;
       const comparisonAvg = priorAvg ?? avg;
 
-      // ── Detect Price Error (Only Discount Rule > 30%; No Price Rule) ──
+      // ── Detect Price Error (Only Discount Rule >= 50%; No Price Rule) ──
       let isError = false;
       let errorReason = "";
 
@@ -669,29 +674,48 @@ async function runMonitor(options = {}) {
         priorCount + 1 >= CONFIG.minDataPointsForAlert
       ) {
         const dropPctNum = ((comparisonAvg - cur) / comparisonAvg) * 100;
-        if (dropPctNum > CONFIG.minDiscountPercent) {
+        if (dropPctNum >= CONFIG.minDiscountPercent) {
           const dropPct = dropPctNum.toFixed(1);
           isError = true;
-          errorReason = `Discount ${dropPct}% (> ${CONFIG.minDiscountPercent}%) below historical JSON price (${formatPrice(comparisonAvg)})`;
+          errorReason = `Discount ${dropPct}% (>= ${CONFIG.minDiscountPercent}%) below historical JSON price (${formatPrice(comparisonAvg)})`;
         }
       }
 
       if (isError) {
-        console.log(`\n🚨 [${asin}] PRICE ERROR DETECTED: ${errorReason}`);
-        console.log(`   📦 ${product.title?.substring(0, 72) || asin}`);
-        console.log(`   💰 Current: ${formatPrice(cur)} | Avg: ${formatPrice(avg)} | MRP: ${formatPrice(product.mrp)}`);
-        product.alertCount = (product.alertCount || 0) + 1;
-        errorCount++;
+        if (product.lastAlertPrice === cur) {
+          product.samePriceAlertCount = (product.samePriceAlertCount || 0) + 1;
+        } else {
+          product.lastAlertPrice = cur;
+          product.samePriceAlertCount = 1;
+        }
 
-        alerts.push({
-          product,
-          currentPrice: cur,
-          avgPrice: comparisonAvg,
-          medianPrice: product.medianPrice,
-          mrp: product.mrp,
-          minMax,
-          reason: errorReason,
-        });
+        if (product.samePriceAlertCount > CONFIG.maxAlertsPerSamePrice) {
+          console.log(
+            `⏭️  [${asin}] Skipping alert: price (${formatPrice(cur)}) is unchanged and already notified ${CONFIG.maxAlertsPerSamePrice} times.`
+          );
+        } else {
+          console.log(`\n🚨 [${asin}] PRICE ERROR DETECTED: ${errorReason} (Alert ${product.samePriceAlertCount}/${CONFIG.maxAlertsPerSamePrice} at this price)`);
+          console.log(`   📦 ${product.title?.substring(0, 72) || asin}`);
+          console.log(`   💰 Current: ${formatPrice(cur)} | Avg: ${formatPrice(avg)} | MRP: ${formatPrice(product.mrp)}`);
+          product.alertCount = (product.alertCount || 0) + 1;
+          errorCount++;
+
+          alerts.push({
+            product,
+            currentPrice: cur,
+            avgPrice: comparisonAvg,
+            medianPrice: product.medianPrice,
+            mrp: product.mrp,
+            minMax,
+            reason: errorReason,
+          });
+        }
+      } else {
+        // Reset same-price counter if product is no longer in price-error state
+        if (product.lastAlertPrice != null && product.lastAlertPrice !== cur) {
+          product.lastAlertPrice = null;
+          product.samePriceAlertCount = 0;
+        }
       }
     }
   } finally {
