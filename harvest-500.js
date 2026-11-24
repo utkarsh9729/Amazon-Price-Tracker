@@ -472,20 +472,40 @@ const CATEGORIES = [
   },
   {
     name: "vacuum cleaner",
-    target: 250,
+    target: 1250,
     queries: [
-      "robotic vacuum cleaner and mop",
-      "cordless stick vacuum cleaner",
-      "wet and dry vacuum cleaner",
-      "handheld car vacuum cleaner",
+      "cordless stick vacuum cleaner home",
+      "wet and dry vacuum cleaner heavy duty",
+      "handheld car vacuum cleaner high suction",
       "bagless canister vacuum cleaner",
-      "eureka forbes agaro philips vacuum",
-      "dyson dreame ecovacs ilife robot vacuum",
-      "sofa carpet mattress vacuum cleaner",
-      "blower vacuum cleaner home",
-      "high suction cyclonic vacuum",
-      "steam mop cleaner",
-      "upright vacuum cleaner",
+      "eureka forbes vacuum cleaner home",
+      "agaro wet dry vacuum cleaner",
+      "philips bagless vacuum cleaner",
+      "dyson cordless vacuum cleaner",
+      "karcher wet and dry vacuum cleaner",
+      "black decker vacuum cleaner",
+      "inalsa wet and dry vacuum cleaner",
+      "kent cyclonic vacuum cleaner",
+      "bosch vacuum cleaner blower",
+      "sofa carpet mattress uv vacuum cleaner",
+      "blower vacuum cleaner home cleaning",
+      "high suction cyclonic vacuum cleaner",
+      "steam mop cleaner floor sanitizer",
+      "upright vacuum cleaner for carpet",
+      "pet hair vacuum cleaner cordless",
+      "industrial heavy duty vacuum cleaner 20l 30l",
+      "mini portable desk keyboard vacuum cleaner",
+      "rechargeable cordless car vacuum cleaner",
+      "hepa filter vacuum cleaner home",
+      "carpet shampooer spot cleaner machine",
+      "prestige typhoon vacuum cleaner",
+      "dreame cordless stick vacuum cleaner",
+      "xiaomi mi vacuum cleaner handheld",
+      "lifelong vacuum cleaner for home",
+      "american micronic vacuum cleaner",
+      "bed mattress dust mite vacuum cleaner",
+      "wet dry cordless floor washer vacuum",
+      "multi surface vacuum cleaner attachments",
     ],
   },
   {
@@ -1894,6 +1914,450 @@ const CATEGORIES = [
       "heavy duty 50m cable reel extension",
     ],
   },
+
+  // ── 12 New High-Volume Categories (+22,000 New Products + 1,000 Vacuum Cleaner Boost = +23,000) ──
+  {
+    name: "office bags",
+    target: 2000,
+    queries: [
+      "office bag for men laptop",
+      "office bag for women tote laptop",
+      "leather laptop messenger bag men",
+      "executive briefcase bag office",
+      "work tote bag women 15.6 inch laptop",
+      "waterproof laptop office bag sling",
+      "genuine leather office bag men",
+      "professional laptop handbag women office",
+      "slim laptop shoulder bag office",
+      "business travel briefcase laptop bag",
+      "mens office side bag messenger",
+      "womens formal office handbag tote",
+      "laptop portfolio sleeve case office",
+      "expandable office laptop bag men",
+      "vegan leather laptop tote bag women",
+      "canvas messenger office bag laptop",
+      "14 inch laptop office bag",
+      "16 inch laptop office briefcase",
+      "office backpack laptop formal men",
+      "office backpack women stylish laptop",
+      "mokobara office laptop bag",
+      "wildcraft office laptop bag",
+      "safari uppercase office laptop bag",
+      "hidesign da milano leather office bag",
+      "tommy hilfiger allen solly office bag",
+      "van heusen louis philippe office bag",
+      "zouk miraggio women office tote bag",
+      "lavie caprese baggit office bag women",
+      "arctic hunter fur jaden office laptop bag",
+      "assembly dailyobjects office laptop bag",
+      "document file organizer office bag",
+      "convertible backpack briefcase office bag",
+    ],
+  },
+  {
+    name: "decor items",
+    target: 2500,
+    queries: [
+      "home decor showpiece living room",
+      "decorative flower vase ceramic modern",
+      "table decor figurines sculpture aesthetic",
+      "living room center table decor items",
+      "brass idol statue home decor antique",
+      "nordic ceramic donut vase home decor",
+      "candle holder tea light stand decorative",
+      "decorative glass bowl platter centerpiece",
+      "aesthetic room decor items bedroom",
+      "indoor tabletop water fountain home decor",
+      "decorative wooden tray accent decor",
+      "metal abstract sculpture showpiece living room",
+      "boho home decor items macrame basket",
+      "crystal lotus feng shui decor showpiece",
+      "decorative table clock vintage antique",
+      "resin deer horse elephant showpiece decor",
+      "glass terrarium planter tabletop decor",
+      "dried pampas grass artificial flowers vase",
+      "decorative lantern moroccan lamp home",
+      "miniature bonsai artificial plant pot decor",
+      "ceramic table planter indoor pot stand",
+      "luxury gold showpiece home decor modern",
+      "wooden bookends shelf decor accents",
+      "decorative mirror tray perfume vanity",
+      "diwali festive urli bowl floating candle",
+      "handcrafted terracotta clay home decor",
+      "glass figurine hourglass sand timer decor",
+      "aromatic reed diffuser scented candle decor",
+      "shelf decor aesthetic minimalist objects",
+      "couple abstract resin statue showpiece",
+      "marble decorative coaster trinket box",
+      "hanging wind chime dream catcher decor",
+      "entryway console table decor items",
+      "office desk decor showpiece motivational",
+    ],
+  },
+  {
+    name: "iot smart home",
+    target: 1500,
+    queries: [
+      "smart wifi plug 16a energy monitoring",
+      "smart wifi touch switch board alexa",
+      "smart rgb led bulb wifi alexa google",
+      "smart wifi ir blaster universal remote",
+      "smart motion sensor zigbee wifi home",
+      "smart door window sensor security wifi",
+      "smart home automation hub zigbee matter",
+      "smart curtain motor automatic wifi",
+      "smart wifi led strip lights music sync",
+      "smart temperature humidity sensor display",
+      "smart relay switch module retrofit",
+      "smart video door bell intercom wifi",
+      "smart water level controller wifi iot",
+      "smart socket extension board wifi",
+      "smart ceiling batten tube light wifi",
+      "wipro smart home wifi plug bulb",
+      "tp link tapo smart plug bulb sensor",
+      "philips wiz smart wifi light bulb",
+      "qubo smart home plug sensor camera",
+      "sonoff tuya smart wifi switch relay",
+      "esp32 wifi bluetooth iot development board",
+      "arduino uno mega iot starter kit sensors",
+      "raspberry pi 5 4 single board computer kit",
+      "nodemcu esp8266 iot relay sensor module",
+      "smart fingerprint cabinet padlock bluetooth",
+      "smart air quality monitor pm2.5 co2",
+      "smart pet feeder wifi camera app",
+      "smart irrigation timer garden wifi",
+      "smart dimmer switch fan regulator wifi",
+      "echo dot smart speaker alexa smart home",
+      "smart smoke gas leak detector alarm wifi",
+      "smart bedside ambient lamp wifi app",
+    ],
+  },
+  {
+    name: "mechanical tools",
+    target: 2000,
+    queries: [
+      "socket wrench set ratchet tool kit",
+      "combination spanner set chrome vanadium",
+      "mechanic tool kit box car bike repair",
+      "precision screwdriver set magnetic bits",
+      "pliers wire cutter nose plier set",
+      "adjustable wrench spanner heavy duty",
+      "torque wrench automotive mechanic tool",
+      "allen key hex key set metric imperial",
+      "taparia hand tools spanner plier set",
+      "stanley hand tool kit mechanic set",
+      "bosch hand tool kit box home repair",
+      "eastman pye venus spanner tool kit",
+      "ingco total hand tool set mechanic",
+      "digital vernier caliper micrometer gauge",
+      "hydraulic bottle floor jack car repair",
+      "heavy duty tool box organizer steel",
+      "pipe wrench plumbing monkey wrench",
+      "claw hammer mallet sledge hammer tool",
+      "hand saw hacksaw wood metal cutting",
+      "bench vice c clamp bar clamp carpentry",
+      "rivet gun pop riveter blind tool kit",
+      "bearing puller gear puller automotive",
+      "circlip plier snap ring plier set",
+      "spirit level measuring tape steel ruler",
+      "wire stripper crimping tool electrical",
+      "file rasp chisel set woodworking metal",
+      "grease gun oil can lubrication tool",
+      "tire lever lug wrench wheel spanner",
+      "multimeter clamp meter digital tester",
+      "stud finder metal detector wall scanner",
+      "staple gun heavy duty upholstery nailer",
+      "complete home repair hand tool kit 100 pcs",
+    ],
+  },
+  {
+    name: "drill machine",
+    target: 1200,
+    queries: [
+      "impact drill machine 13mm concrete wall",
+      "cordless drill driver 12v 18v 20v lithium",
+      "rotary hammer drill machine sds plus",
+      "electric drill machine kit home wall",
+      "cordless screwdriver electric drill mini",
+      "bosch impact drill machine gsb kit",
+      "black decker drill machine kit home",
+      "stanley cordless impact drill machine",
+      "dewalt cordless brushless drill driver",
+      "makita electric hammer drill machine",
+      "ibell impact drill machine tool kit",
+      "ingco cordless drill machine 20v",
+      "cheetah dongcheng drill machine 10mm 13mm",
+      "krost foster drill machine kit home",
+      "heavy duty 26mm rotary hammer drill",
+      "brushless cordless hammer drill battery",
+      "electric drill machine 10mm wood metal",
+      "mini pcb hand drill rotary tool dremel",
+      "bench drill press stand pillar machine",
+      "demolition breaker hammer drill machine",
+      "hss masonry wood drill bit set box",
+      "hole saw cutter drill bit kit wood metal",
+      "impact wrench cordless electric 1/2 inch",
+      "angle drill right angle attachment adapter",
+      "variable speed reversible drill machine",
+      "magnetic core drill machine industrial",
+      "cordless combi drill 2 battery charger",
+      "drill machine with 100 pcs accessories kit",
+    ],
+  },
+  {
+    name: "vacuum bots",
+    target: 800,
+    queries: [
+      "robotic vacuum cleaner and mop lidar",
+      "robot vacuum cleaner automatic floor",
+      "self emptying robot vacuum cleaner",
+      "dreame robotic vacuum cleaner mop",
+      "ecovacs deebot robot vacuum cleaner",
+      "roborock robotic vacuum cleaner mop",
+      "ilife robotic vacuum cleaner home",
+      "eureka forbes robotic vacuum cleaner",
+      "xiaomi mi robot vacuum mop pro",
+      "irobot roomba robotic vacuum cleaner",
+      "narwal freo robot vacuum and mop",
+      "agaro alpha robotic vacuum cleaner",
+      "haier robotic vacuum cleaner mop",
+      "tp link tapo robot vacuum cleaner",
+      "milagrow robotic vacuum cleaner floor",
+      "viomi robot vacuum cleaner lidar",
+      "smart wifi alexa robot vacuum cleaner",
+      "auto dust collection robot vacuum mop",
+      "robotic window cleaner glass cleaning bot",
+      "robotic vacuum cleaner replacement mop pad brush",
+      "robot vacuum hepa filter side brush kit",
+      "automatic smart floor sweeping robot",
+      "pet hair robotic vacuum cleaner tangle free",
+      "slim robotic vacuum cleaner under furniture",
+    ],
+  },
+  {
+    name: "tshirts",
+    target: 2500,
+    queries: [
+      "men cotton round neck t shirt",
+      "men polo collar t shirt cotton",
+      "men oversized drop shoulder t shirt",
+      "men graphic printed t shirt streetwear",
+      "men gym sports dry fit t shirt",
+      "men full sleeve cotton t shirt",
+      "men henley neck t shirt casual",
+      "men pack of 3 5 cotton t shirts",
+      "women cotton round neck t shirt",
+      "women oversized baggy graphic t shirt",
+      "women polo collar t shirt casual",
+      "women gym activewear sports t shirt",
+      "women crop t shirt cotton summer",
+      "women full sleeve cotton t shirt",
+      "us polo assn men t shirt",
+      "allen solly van heusen men polo t shirt",
+      "levis jack jones pepe jeans men t shirt",
+      "puma adidas nike reebok men t shirt",
+      "the souled store bewakoof oversized t shirt",
+      "damensch xyxx jockey men cotton t shirt",
+      "max marks spencer women t shirt",
+      "vero moda only levis women t shirt",
+      "men v neck solid cotton t shirt",
+      "men striped colorblock polo t shirt",
+      "men waffle knit textured t shirt",
+      "men heavyweight 240gsm oversized t shirt",
+      "men compression quick dry running t shirt",
+      "women tie dye floral printed t shirt",
+      "women ribbed fitted basic t shirt",
+      "unisex anime printed oversized t shirt",
+      "men linen blend summer t shirt",
+      "men raglan sleeve baseball t shirt",
+      "kids boys girls cotton t shirt pack",
+      "men collared zipper polo t shirt",
+    ],
+  },
+  {
+    name: "jeans",
+    target: 2000,
+    queries: [
+      "men slim fit stretch denim jeans",
+      "men regular straight fit jeans",
+      "men relaxed baggy loose fit jeans",
+      "men tapered carrot fit jeans",
+      "men black skinny stretch jeans",
+      "men light blue washed denim jeans",
+      "men cargo denim jeans pockets",
+      "men distressed ripped denim jeans",
+      "women high waist wide leg jeans",
+      "women straight fit mom jeans",
+      "women skinny stretch denim jeans",
+      "women flared bootcut denim jeans",
+      "women baggy boyfriend loose jeans",
+      "women black high rise denim jeans",
+      "levis men jeans 511 512 501",
+      "pepe jeans wrangler men denim jeans",
+      "spykar mufti killer men jeans",
+      "jack jones flying machine men jeans",
+      "benetton lee allen solly men jeans",
+      "levis women high rise jeans",
+      "only vero moda women denim jeans",
+      "kraus madame kotty women jeans",
+      "miss chase forever 21 women jeans",
+      "men selvedge raw dark indigo jeans",
+      "men grey charcoal stretch jeans",
+      "men athletic fit big thigh jeans",
+      "women ankle length cropped jeans",
+      "women jeggings denim stretch pants",
+      "men pleated relaxed vintage jeans",
+      "women paperbag waist denim jeans",
+      "men mid rise comfort stretch jeans",
+      "women cargo pockets wide leg jeans",
+    ],
+  },
+  {
+    name: "dresses",
+    target: 2500,
+    queries: [
+      "women maxi long floral dress",
+      "women midi a line casual dress",
+      "women bodycon party cocktail dress",
+      "women fit and flare skater dress",
+      "women cotton summer sundress",
+      "women wrap v neck midi dress",
+      "women shirt dress belted knee length",
+      "women mini short party wear dress",
+      "women evening gown formal long dress",
+      "women tiered ruffled boho maxi dress",
+      "women satin slip evening dress",
+      "women denim pinafore dungaree dress",
+      "women winter knit sweater dress",
+      "women ethnic fusion anarkali maxi dress",
+      "women office formal sheath pencil dress",
+      "women georgette pleated chiffon dress",
+      "women puff sleeve square neck dress",
+      "women off shoulder halter beach dress",
+      "women sequin shimmer night party dress",
+      "women linen breathable summer dress",
+      "vero moda women western dress",
+      "only mango forever 21 women dress",
+      "harpa miss chase faballey women dress",
+      "marks spencer allen solly women dress",
+      "biba w aurelia women ethnic dress",
+      "berrylush aahwan tokyo talkies dress",
+      "kazo madame rare women party dress",
+      "women maternity nursing feeding dress",
+      "women black little black dress lbd",
+      "women white eyelet lace beach dress",
+      "women polka dot vintage retro dress",
+      "women corset bustier midi dress",
+      "women velvet winter party dress",
+      "women kaftan resort wear maxi dress",
+    ],
+  },
+  {
+    name: "shirts & tops",
+    target: 2000,
+    queries: [
+      "men formal cotton slim fit shirt",
+      "men casual checkered plaid shirt",
+      "men pure linen solid summer shirt",
+      "men denim button down shirt",
+      "men oxford button down casual shirt",
+      "men floral tropical beach resort shirt",
+      "men mandarin chinese collar shirt",
+      "men overshirt shacket corduroy flannel",
+      "men satin party wear printed shirt",
+      "allen solly van heusen men formal shirt",
+      "louis philippe peter england men shirt",
+      "arrow raymond park avenue men shirt",
+      "us polo assn levis men casual shirt",
+      "women casual printed cotton top",
+      "women formal office blouse shirt",
+      "women peplum waist stylish top",
+      "women crop top western party wear",
+      "women chiffon georgette ruffle top",
+      "women tunic long top for jeans",
+      "women satin halter cowl neck top",
+      "women ribbed tank camisole top",
+      "women oversized cotton shirt",
+      "women lace embroidered boho top",
+      "women off shoulder cold shoulder top",
+      "vero moda only women tops",
+      "allen solly van heusen women formal top",
+      "harpa miss chase tokyo talkies women top",
+      "marks spencer mango women shirt top",
+      "men textured popcorn knit resort shirt",
+      "men cuban camp collar half sleeve shirt",
+      "women wrap tie front blouse top",
+      "women knit polo collared top",
+    ],
+  },
+  {
+    name: "hoodies & jackets",
+    target: 1500,
+    queries: [
+      "men fleece pullover hoodie sweatshirt",
+      "men zipper hooded sweatshirt jacket",
+      "men bomber flight casual jacket",
+      "men winter puffer quilted jacket",
+      "men blue black denim trucker jacket",
+      "men faux leather biker jacket",
+      "men waterproof windcheater rain jacket",
+      "men varsity college baseball jacket",
+      "men wool blend winter sweater pullover",
+      "men sleeveless quilted nehru puffer vest",
+      "women oversized fleece hoodie sweatshirt",
+      "women winter puffer parka trench coat",
+      "women denim cropped trucker jacket",
+      "women faux leather moto biker jacket",
+      "women woollen cardigan shrug sweater",
+      "women formal office blazer coat",
+      "men slim fit casual formal blazer",
+      "puma adidas nike men hoodie jacket",
+      "allen solly us polo men winter jacket",
+      "woodland monte carlo men sweater jacket",
+      "levis jack jones men denim jacket",
+      "fort collins campus sutra men jacket",
+      "vero moda only women winter jacket",
+      "marks spencer madame women cardigan sweater",
+      "men thermal fleece lined zip jacket",
+      "women fleece sherpa teddy jacket",
+      "unisex graphic printed streetwear hoodie",
+      "men corduroy trucker collar jacket",
+    ],
+  },
+  {
+    name: "trousers & trackpants",
+    target: 1500,
+    queries: [
+      "men slim fit cotton chinos trousers",
+      "men formal pleated office trousers",
+      "men multi pocket cargo pants cotton",
+      "men cotton joggers cuffed track pants",
+      "men gym running sports track pants",
+      "men linen relaxed drawstring trousers",
+      "men corduroy straight casual pants",
+      "men athletic shorts gym running shorts",
+      "women high waist wide leg formal trousers",
+      "women korean pleated tailored pants",
+      "women cargo parachute utility pants",
+      "women cotton joggers lounge track pants",
+      "women high waist gym yoga leggings",
+      "women flared palazzo wide leg pants",
+      "women cigarette ankle length formal pants",
+      "allen solly van heusen men formal trousers",
+      "peter england louis philippe men chinos",
+      "arrow raymond park avenue men trousers",
+      "puma adidas nike men track pants joggers",
+      "jockey boldfit hrX men gym track pants",
+      "levis us polo assn men chinos",
+      "vero moda only women formal trousers",
+      "marks spencer allen solly women trousers",
+      "blissclub puma adidas women yoga leggings",
+      "men baggy pleated relaxed trousers",
+      "men waterproof trekking hiking pants",
+      "women linen summer wide leg trousers",
+      "men stretchable formal office pants",
+    ],
+  },
 ];
 
 const SORT_ORDERS = [
@@ -1944,7 +2408,7 @@ async function harvestCategory(
   const existingList = existingCategoryMap[cat.name] || [];
   for (const asin of existingList) {
     const p = globalProducts[asin];
-    if (p && !usedGlobalAsins.has(asin)) {
+    if (p) {
       p.category = cat.name;
       collected.set(asin, p);
       usedGlobalAsins.add(asin);
@@ -1953,249 +2417,303 @@ async function harvestCategory(
 
   if (collected.size >= targetCount) {
     console.log(
-      `   ⏭️  [${cat.name.padEnd(17)}] Already has ${collected.size}/${targetCount} products`
+      `   ⏭️  [${cat.name.padEnd(21)}] Already has ${collected.size}/${targetCount} products`
     );
-    return [...collected.keys()].slice(0, targetCount);
+    return { skus: [...collected.keys()].slice(0, targetCount), added: 0 };
   }
 
-  // Build candidate Search API task queue (No price rule; strictly > 30% discount rule)
-  const tasks = [];
+  const startCount = collected.size;
 
-  // Wave 1: 35%+ off discount facet across queries (guarantees > 30% discount)
-  for (let pageNum = 1; pageNum <= 4; pageNum++) {
-    for (const q of cat.queries) {
-      tasks.push({
-        qs: `k=${encodeURIComponent(q)}&rh=${encodeURIComponent(DISCOUNT_BUCKETS[0])}&s=relevanceblender&page=${pageNum}`,
-      });
-    }
-  }
+  // Build prioritized sub-waves with per-sub-wave stall detection so we never
+  // waste hundreds of queries on exhausted pages/facets.
+  const subWaves = [];
 
-  // Wave 2: Unfiltered queries across multiple sort orders & pages (filtered for > 30% discount in parser)
+  // Priority 1: 50%+ discount facet across distinct sort orders (high yield, >=50% off)
   for (const sort of SORT_ORDERS) {
-    for (let pageNum = 1; pageNum <= 5; pageNum++) {
+    const waveTasks = [];
+    for (let pageNum = 1; pageNum <= 7; pageNum++) {
       for (const q of cat.queries) {
-        tasks.push({
-          qs: `k=${encodeURIComponent(q)}&s=${sort}&page=${pageNum}`,
+        waveTasks.push({
+          qs: `k=${encodeURIComponent(q)}&rh=${encodeURIComponent(DISCOUNT_BUCKETS[0])}&s=${sort}&page=${pageNum}`,
+          minDiscountPct: MIN_DISCOUNT_PCT,
         });
       }
     }
+    subWaves.push({ label: `50%+:${sort}`, tasks: waveTasks });
   }
 
-  // Wave 3: 25%+ and 50%+ discount facets with extra sort orders if still needed
-  for (const bucket of DISCOUNT_BUCKETS.slice(1)) {
-    for (const sort of SORT_ORDERS.slice(0, 3)) {
-      for (let pageNum = 1; pageNum <= 5; pageNum++) {
-        for (const q of cat.queries) {
-          tasks.push({
-            qs: `k=${encodeURIComponent(q)}&rh=${encodeURIComponent(bucket)}&s=${sort}&page=${pageNum}`,
-          });
+  // Priority 2: Unfiltered queries across sort orders (filtered for >=50% in parser)
+  for (const sort of SORT_ORDERS.slice(0, 3)) {
+    const waveTasks = [];
+    for (let pageNum = 1; pageNum <= 6; pageNum++) {
+      for (const q of cat.queries) {
+        waveTasks.push({
+          qs: `k=${encodeURIComponent(q)}&s=${sort}&page=${pageNum}`,
+          minDiscountPct: MIN_DISCOUNT_PCT,
+        });
+      }
+    }
+    subWaves.push({ label: `all>=50%:${sort}`, tasks: waveTasks });
+  }
+
+  // Priority 3: Fallback for niche categories (e.g. vacuum bots / drill machine)
+  // Any valid priced product so historical avg price-drop monitoring covers all real SKUs
+  for (const sort of SORT_ORDERS) {
+    const waveTasks = [];
+    for (let pageNum = 1; pageNum <= 6; pageNum++) {
+      for (const q of cat.queries) {
+        waveTasks.push({
+          qs: `k=${encodeURIComponent(q)}&s=${sort}&page=${pageNum}`,
+          minDiscountPct: 0,
+        });
+      }
+    }
+    subWaves.push({ label: `any:${sort}`, tasks: waveTasks });
+  }
+
+  let totalQueriesRun = 0;
+
+  for (const wave of subWaves) {
+    if (collected.size >= targetCount) break;
+
+    let taskIdx = 0;
+    let consecutiveStallBatches = 0;
+    let consecutiveZeroRawBatches = 0;
+
+    while (collected.size < targetCount && taskIdx < wave.tasks.length) {
+      const batch = wave.tasks.slice(taskIdx, taskIdx + CONCURRENCY);
+      taskIdx += CONCURRENCY;
+      totalQueriesRun += batch.length;
+
+      const batchItems = await page.evaluate(
+        async ({ batchTasks }) => {
+          const parseNum = (s) => {
+            if (!s) return null;
+            const cleaned = String(s).replace(/[^\d.]/g, "");
+            const n = parseFloat(cleaned);
+            return isNaN(n) ? null : n;
+          };
+
+          const parser = new DOMParser();
+
+          const fetchOne = async (task) => {
+            try {
+              const res = await fetch(`/s/query?${task.qs}`, {
+                method: "POST",
+                headers: {
+                  Accept: "text/html,*/*",
+                  "Content-Type": "application/json",
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+                body: JSON.stringify({ "customer-action": "query" }),
+                credentials: "include",
+              });
+              if (!res.ok) return [];
+              const text = await res.text();
+              const chunks = text.split("&&&");
+              const found = [];
+
+              for (let i = 0; i < chunks.length; i++) {
+                const c = chunks[i].trim();
+                if (!c) continue;
+                let arr;
+                try {
+                  arr = JSON.parse(c);
+                } catch {
+                  continue;
+                }
+                if (!Array.isArray(arr) || arr[0] !== "dispatch") continue;
+                const payload = arr[2];
+                if (!payload || !payload.asin || !payload.html) continue;
+
+                const doc = parser.parseFromString(payload.html, "text/html");
+                const csaPrice = doc
+                  .querySelector("[data-csa-c-price-to-pay]")
+                  ?.getAttribute("data-csa-c-price-to-pay");
+                const offscreenPrice = doc
+                  .querySelector(
+                    '.a-price:not([data-a-strike="true"]) .a-offscreen'
+                  )
+                  ?.textContent?.trim();
+                const wholePrice = doc
+                  .querySelector(
+                    '.a-price:not([data-a-strike="true"]) .a-price-whole'
+                  )
+                  ?.textContent?.trim();
+
+                const currentPrice =
+                  parseNum(csaPrice) ??
+                  parseNum(offscreenPrice) ??
+                  parseNum(wholePrice);
+                if (!currentPrice || currentPrice <= 0) continue;
+
+                const mrp = parseNum(
+                  doc
+                    .querySelector('.a-price[data-a-strike="true"] .a-offscreen')
+                    ?.textContent?.trim()
+                );
+
+                const priceRecipeText =
+                  doc.querySelector('[data-cy="price-recipe"]')?.textContent ||
+                  doc.body.textContent ||
+                  "";
+                let discountPct = null;
+                let discountText = null;
+
+                const mOff =
+                  priceRecipeText.match(/\((\d+)\s*%\s*off\)/i) ||
+                  priceRecipeText.match(/(\d+)\s*%\s*off/i) ||
+                  priceRecipeText.match(/-\s*(\d+)\s*%/);
+                if (mOff) {
+                  discountPct = parseFloat(mOff[1]);
+                  discountText = `(${Math.round(discountPct)}% off)`;
+                }
+
+                if (mrp && mrp > currentPrice) {
+                  const calcPct = ((mrp - currentPrice) / mrp) * 100;
+                  if (discountPct == null || calcPct > discountPct) {
+                    discountPct = Math.round(calcPct * 10) / 10;
+                  }
+                  if (!discountText) {
+                    discountText = `(${Math.round(calcPct)}% off)`;
+                  }
+                }
+
+                if (task.minDiscountPct > 0) {
+                  if (discountPct == null || discountPct < task.minDiscountPct) {
+                    continue;
+                  }
+                }
+
+                const h2List = [
+                  ...doc.querySelectorAll('[data-cy="title-recipe"] h2, h2'),
+                ];
+                const titleParts = h2List
+                  .map((el) =>
+                    (
+                      el.getAttribute("aria-label")?.trim() ||
+                      el.textContent?.trim() ||
+                      ""
+                    )
+                      .replace(/^sponsored\s+ad\s*[-–—:]\s*/i, "")
+                      .trim()
+                  )
+                  .filter(Boolean);
+                const title =
+                  [...new Set(titleParts)].join(" — ") || payload.asin;
+
+                const dealBadge =
+                  doc.querySelector(".a-badge-text")?.textContent?.trim() || null;
+                const merchantEl =
+                  doc.querySelector("[data-csa-c-merchant-id]") ||
+                  doc.querySelector('input[name="merchantId"]');
+                const merchantId =
+                  merchantEl?.getAttribute("data-csa-c-merchant-id") ||
+                  merchantEl?.getAttribute("value") ||
+                  null;
+                const imageUrl =
+                  doc.querySelector("img.s-image")?.getAttribute("src") || null;
+
+                found.push({
+                  asin: payload.asin,
+                  title,
+                  currentPrice,
+                  mrp,
+                  discountPct,
+                  dealBadge,
+                  discountText,
+                  merchantId,
+                  imageUrl,
+                });
+              }
+              return found;
+            } catch {
+              return [];
+            }
+          };
+
+          const all = await Promise.all(batchTasks.map((t) => fetchOne(t)));
+          return all.flat();
+        },
+        { batchTasks: batch }
+      );
+
+      if (batchItems.length === 0) {
+        consecutiveZeroRawBatches++;
+        if (consecutiveZeroRawBatches >= 2) {
+          // Back off briefly if Amazon throttled responses
+          await page.waitForTimeout(2000);
+        }
+      } else {
+        consecutiveZeroRawBatches = 0;
+      }
+
+      const nowIso = new Date().toISOString();
+      let batchAdded = 0;
+      for (const item of batchItems) {
+        if (collected.size >= targetCount) break;
+        if (!collected.has(item.asin) && !usedGlobalAsins.has(item.asin)) {
+          const record = {
+            asin: item.asin,
+            category: cat.name,
+            title: item.title,
+            mrp: item.mrp,
+            currentPrice: item.currentPrice,
+            averagePrice: item.currentPrice,
+            medianPrice: item.currentPrice,
+            minPrice: item.currentPrice,
+            maxPrice: item.currentPrice,
+            discountPct: item.discountPct,
+            discountText: item.discountText,
+            dealBadge: item.dealBadge,
+            merchantId: item.merchantId,
+            imageUrl: item.imageUrl,
+            history: [
+              {
+                price: item.currentPrice,
+                mrp: item.mrp,
+                isDeal: Boolean(item.dealBadge),
+                dealBadge: item.dealBadge,
+                merchantId: item.merchantId,
+                timestamp: nowIso,
+              },
+            ],
+            lastChecked: nowIso,
+            alertCount: 0,
+            lastAlertPrice: null,
+            lastAlertAvgPrice: null,
+            lastAlertAt: null,
+            samePriceAlertCount: 0,
+            firstSeen: nowIso,
+          };
+          collected.set(item.asin, record);
+          globalProducts[item.asin] = record;
+          usedGlobalAsins.add(item.asin);
+          batchAdded++;
         }
       }
-    }
-  }
 
-  let taskIdx = 0;
+      process.stdout.write(
+        `\r   📦 [${cat.name.padEnd(21)}] ${collected.size}/${targetCount} (+${batchAdded}, raw:${batchItems.length}, wave:${wave.label}, q:${totalQueriesRun})   `
+      );
 
-  while (collected.size < targetCount && taskIdx < tasks.length) {
-    const batch = tasks.slice(taskIdx, taskIdx + CONCURRENCY);
-    taskIdx += CONCURRENCY;
-
-    const batchItems = await page.evaluate(
-      async ({ batchTasks, minDiscountPct }) => {
-        const parseNum = (s) => {
-          if (!s) return null;
-          const cleaned = String(s).replace(/[^\d.]/g, "");
-          const n = parseFloat(cleaned);
-          return isNaN(n) ? null : n;
-        };
-
-        const parser = new DOMParser();
-
-        const fetchOne = async (qs) => {
-          try {
-            const res = await fetch(`/s/query?${qs}`, {
-              method: "POST",
-              headers: {
-                Accept: "text/html,*/*",
-                "Content-Type": "application/json",
-                "X-Requested-With": "XMLHttpRequest",
-              },
-              body: JSON.stringify({ "customer-action": "query" }),
-              credentials: "include",
-            });
-            if (!res.ok) return [];
-            const text = await res.text();
-            const chunks = text.split("&&&");
-            const found = [];
-
-            for (let i = 0; i < chunks.length; i++) {
-              const c = chunks[i].trim();
-              if (!c) continue;
-              let arr;
-              try {
-                arr = JSON.parse(c);
-              } catch {
-                continue;
-              }
-              if (!Array.isArray(arr) || arr[0] !== "dispatch") continue;
-              const payload = arr[2];
-              if (!payload || !payload.asin || !payload.html) continue;
-
-              const doc = parser.parseFromString(payload.html, "text/html");
-              const csaPrice = doc
-                .querySelector("[data-csa-c-price-to-pay]")
-                ?.getAttribute("data-csa-c-price-to-pay");
-              const offscreenPrice = doc
-                .querySelector(
-                  '.a-price:not([data-a-strike="true"]) .a-offscreen'
-                )
-                ?.textContent?.trim();
-              const wholePrice = doc
-                .querySelector(
-                  '.a-price:not([data-a-strike="true"]) .a-price-whole'
-                )
-                ?.textContent?.trim();
-
-              const currentPrice =
-                parseNum(csaPrice) ??
-                parseNum(offscreenPrice) ??
-                parseNum(wholePrice);
-              if (!currentPrice || currentPrice <= 0) continue;
-
-              const mrp = parseNum(
-                doc
-                  .querySelector('.a-price[data-a-strike="true"] .a-offscreen')
-                  ?.textContent?.trim()
-              );
-
-              // Extract discount percentage (strictly > 30% required; no minimum price rule)
-              const priceRecipeText =
-                doc.querySelector('[data-cy="price-recipe"]')?.textContent ||
-                doc.body.textContent ||
-                "";
-              let discountPct = null;
-              let discountText = null;
-
-              const mOff =
-                priceRecipeText.match(/\((\d+)\s*%\s*off\)/i) ||
-                priceRecipeText.match(/(\d+)\s*%\s*off/i) ||
-                priceRecipeText.match(/-\s*(\d+)\s*%/);
-              if (mOff) {
-                discountPct = parseFloat(mOff[1]);
-                discountText = `(${Math.round(discountPct)}% off)`;
-              }
-
-              if (mrp && mrp > currentPrice) {
-                const calcPct = ((mrp - currentPrice) / mrp) * 100;
-                if (discountPct == null || calcPct > discountPct) {
-                  discountPct = Math.round(calcPct * 10) / 10;
-                }
-                if (!discountText) {
-                  discountText = `(${Math.round(calcPct)}% off)`;
-                }
-              }
-
-              if (discountPct == null || discountPct < minDiscountPct) {
-                continue;
-              }
-
-              const h2List = [
-                ...doc.querySelectorAll('[data-cy="title-recipe"] h2, h2'),
-              ];
-              const titleParts = h2List
-                .map(
-                  (el) =>
-                    el.getAttribute("aria-label")?.trim() ||
-                    el.textContent?.trim()
-                )
-                .filter(Boolean);
-              const title =
-                [...new Set(titleParts)].join(" — ") || payload.asin;
-
-              const dealBadge =
-                doc.querySelector(".a-badge-text")?.textContent?.trim() || null;
-              const merchantEl =
-                doc.querySelector("[data-csa-c-merchant-id]") ||
-                doc.querySelector('input[name="merchantId"]');
-              const merchantId =
-                merchantEl?.getAttribute("data-csa-c-merchant-id") ||
-                merchantEl?.getAttribute("value") ||
-                null;
-              const imageUrl =
-                doc.querySelector("img.s-image")?.getAttribute("src") || null;
-
-              found.push({
-                asin: payload.asin,
-                title,
-                currentPrice,
-                mrp,
-                discountPct,
-                dealBadge,
-                discountText,
-                merchantId,
-                imageUrl,
-              });
-            }
-            return found;
-          } catch {
-            return [];
-          }
-        };
-
-        const all = await Promise.all(batchTasks.map((t) => fetchOne(t.qs)));
-        return all.flat();
-      },
-      { batchTasks: batch, minDiscountPct: MIN_DISCOUNT_PCT }
-    );
-
-    const nowIso = new Date().toISOString();
-    for (const item of batchItems) {
-      if (collected.size >= targetCount) break;
-      if (!collected.has(item.asin) && !usedGlobalAsins.has(item.asin)) {
-        const record = {
-          asin: item.asin,
-          category: cat.name,
-          title: item.title,
-          mrp: item.mrp,
-          currentPrice: item.currentPrice,
-          averagePrice: item.currentPrice,
-          medianPrice: item.currentPrice,
-          minPrice: item.currentPrice,
-          maxPrice: item.currentPrice,
-          discountPct: item.discountPct,
-          discountText: item.discountText,
-          dealBadge: item.dealBadge,
-          merchantId: item.merchantId,
-          imageUrl: item.imageUrl,
-          history: [
-            {
-              price: item.currentPrice,
-              mrp: item.mrp,
-              isDeal: Boolean(item.dealBadge),
-              dealBadge: item.dealBadge,
-              merchantId: item.merchantId,
-              timestamp: nowIso,
-            },
-          ],
-          lastChecked: nowIso,
-          alertCount: 0,
-          firstSeen: nowIso,
-        };
-        collected.set(item.asin, record);
-        globalProducts[item.asin] = record;
-        usedGlobalAsins.add(item.asin);
+      if (batchAdded < 2) {
+        consecutiveStallBatches++;
+        if (consecutiveStallBatches >= 3) {
+          // Move immediately to next sub-wave instead of wasting queries
+          break;
+        }
+      } else {
+        consecutiveStallBatches = 0;
       }
     }
-
-    process.stdout.write(
-      `\r   📦 [${cat.name.padEnd(17)}] Harvested: ${collected.size}/${targetCount} (queries: ${taskIdx}/${tasks.length})`
-    );
   }
 
+  const added = collected.size - startCount;
   console.log(
-    `\n   ✅ Completed [${cat.name}]: ${collected.size} products (Discount > ${MIN_DISCOUNT_PCT}%)`
+    `\n   ✅ Completed [${cat.name}]: ${collected.size} products (+${added} new)`
   );
-  return [...collected.keys()].slice(0, targetCount);
+  return { skus: [...collected.keys()].slice(0, targetCount), added };
 }
 
 async function main() {
@@ -2206,6 +2724,7 @@ async function main() {
   const skuData = loadSkus(skuFile);
   if (!skuData.categories) skuData.categories = {};
 
+  const initialSkuCount = (skuData.skus || []).length;
   const totalTarget = CATEGORIES.reduce(
     (s, c) => s + (c.target || DEFAULT_TARGET_PER_CATEGORY),
     0
@@ -2215,8 +2734,10 @@ async function main() {
   console.log(
     `  🛒 Amazon.in Bulk Search API Harvester (${CATEGORIES.length} Categories)`
   );
-  console.log(`  🎯 Target: ${totalTarget.toLocaleString("en-IN")} total products (≥ 250/category)`);
-  console.log(`  🏷️  Filter: Discount > ${MIN_DISCOUNT_PCT}% (No minimum price rule)`);
+  console.log(
+    `  🎯 Target: ${totalTarget.toLocaleString("en-IN")} total products (Existing: ${initialSkuCount.toLocaleString("en-IN")})`
+  );
+  console.log(`  🏷️  Filter: Prefer Discount >= ${MIN_DISCOUNT_PCT}% (fallback for niche categories)`);
   console.log("═══════════════════════════════════════════════════════════════════\n");
 
   const context = await chromium.launchPersistentContext(
@@ -2241,23 +2762,23 @@ async function main() {
       timeout: 30000,
     });
 
-    const allSkus = [];
+    // Pre-reserve ALL existing ASINs across ALL existing categories so no category
+    // ever steals an ASIN from another category and every added SKU is genuinely new.
     const usedGlobalAsins = new Set();
-
-    // Reserve existing SKUs first so new categories never steal an ASIN from an existing category
-    for (const cat of CATEGORIES) {
-      for (const asin of skuData.categories[cat.name] || []) {
-        if (data.products[asin]) {
-          usedGlobalAsins.add(asin);
-        }
+    for (const asinList of Object.values(skuData.categories)) {
+      for (const asin of asinList || []) {
+        usedGlobalAsins.add(asin);
       }
     }
-    // Clear and re-track inside harvestCategory
-    usedGlobalAsins.clear();
+    for (const asin of skuData.skus || []) {
+      usedGlobalAsins.add(asin);
+    }
+
+    let totalAdded = 0;
 
     for (let i = 0; i < CATEGORIES.length; i++) {
       const cat = CATEGORIES[i];
-      const catSkus = await harvestCategory(
+      const { skus: catSkus, added } = await harvestCategory(
         page,
         cat,
         skuData.categories,
@@ -2265,25 +2786,30 @@ async function main() {
         usedGlobalAsins
       );
       skuData.categories[cat.name] = catSkus;
-      allSkus.push(...catSkus);
+      totalAdded += added;
 
-      // Save checkpoint every 5 categories or on final category
-      if ((i + 1) % 5 === 0 || i === CATEGORIES.length - 1) {
-        skuData.skus = [...new Set(allSkus)];
+      // Save crash-safe checkpoint after every category that harvested new products or on final category
+      if (added > 0 || i === CATEGORIES.length - 1) {
+        skuData.skus = [
+          ...new Set(Object.values(skuData.categories).flat()),
+        ];
         fs.writeFileSync(skuFile, JSON.stringify(skuData, null, 2), "utf-8");
         data.lastRun = new Date().toISOString();
         data.runCount = (data.runCount || 0) + 1;
-        fs.writeFileSync(dataFile, JSON.stringify(data, null, 2), "utf-8");
+        fs.writeFileSync(dataFile, JSON.stringify(data), "utf-8");
+        console.log(
+          `   💾 Checkpoint saved — Total unique SKUs: ${skuData.skus.length.toLocaleString("en-IN")} (+${totalAdded.toLocaleString("en-IN")} new this run)`
+        );
       }
     }
 
     console.log("\n═══════════════════════════════════════════════════════════════════");
     console.log(
-      `  🎉 Harvest Complete! Total Categories: ${CATEGORIES.length} | Total Unique SKUs: ${skuData.skus.length}`
+      `  🎉 Harvest Complete! Total Categories: ${CATEGORIES.length} | Total Unique SKUs: ${skuData.skus.length.toLocaleString("en-IN")} (+${totalAdded.toLocaleString("en-IN")} new)`
     );
     for (const cat of CATEGORIES) {
       console.log(
-        `     • ${cat.name.padEnd(18)}: ${(skuData.categories[cat.name] || []).length} SKUs`
+        `     • ${cat.name.padEnd(22)}: ${(skuData.categories[cat.name] || []).length} SKUs`
       );
     }
     console.log("═══════════════════════════════════════════════════════════════════\n");

@@ -68,6 +68,7 @@ async function handleTelegramCommand(text) {
         `⏱️ Cron Interval: Every <b>${intervalMinutes} min</b>\n` +
         `📦 Monitored SKUs: <b>${(skuData.skus || []).length}</b> (${categoriesCount} categories)\n` +
         `🎯 Rule: Discount &gt; <b>${CONFIG.minDiscountPercent}%</b> (No price rule)\n` +
+        `🔕 Repeat Cap: Max <b>${CONFIG.maxAlertsPerSamePrice}</b> alerts/product unless price changes ≥<b>${CONFIG.minPriceChangePercentForNewAlert}%</b> of avg\n` +
         `🔄 Total Runs Logged: <b>${data.runCount || 0}</b>\n` +
         `🕒 Last Run: ${data.lastRun ? new Date(data.lastRun).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "N/A"}\n` +
         `⏭️ Next Scheduled Run: ${isPaused ? "Paused" : nextRunTime.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`

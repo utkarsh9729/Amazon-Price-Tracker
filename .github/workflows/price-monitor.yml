@@ -21,49 +21,137 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  monitor:
+  monitor-shard:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
 
     steps:
-      - name: Checkout repository
+      - name: Shallow checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Run Amazon Search API Price Monitor
+      - name: Run Fast Multithreaded Price Monitor (Shard ${{ matrix.shard }}/4)
+        id: fast_run
         env:
-          HEADLESS: "true"
+          WORKERS: "4"
+          CONCURRENCY_PER_WORKER: "12"
+          SEARCH_BATCH_SIZE: "32"
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          if [ "${{ github.event.inputs.send_test_alert }}" = "true" ]; then
-            node price-monitor.js --send-test-alert
-          else
-            node price-monitor.js
+          EXTRA_ARGS=""
+          if [ "${{ github.event.inputs.send_test_alert }}" = "true" ] && [ "${{ matrix.shard }}" = "1" ]; then
+            EXTRA_ARGS="--send-test-alert"
+          fi
+          set +e
+          node price-monitor.js --shard ${{ matrix.shard }}/4 --shard-out shard-${{ matrix.shard }}.json $EXTRA_ARGS
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -eq 42 ]; then
+            echo "need_playwright=true" >> "$GITHUB_OUTPUT"
+            echo "Direct HTTP challenged; triggering Playwright fallback..."
+          elif [ $EXIT_CODE -ne 0 ]; then
+            exit $EXIT_CODE
           fi
 
-      - name: Save & Commit Updated price-data.json
+      - name: Cache Playwright browsers (Fallback Only)
+        if: steps.fast_run.outputs.need_playwright == 'true'
+        id: pw_cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright (Fallback Only)
+        if: steps.fast_run.outputs.need_playwright == 'true'
+        run: |
+          npm ci --no-audit --no-fund
+          if [ "${{ steps.pw_cache.outputs.cache-hit }}" != "true" ]; then
+            npx playwright install --with-deps chromium
+          else
+            npx playwright install-deps chromium
+          fi
+
+      - name: Run Price Monitor via Playwright Fallback (Shard ${{ matrix.shard }}/4)
+        if: steps.fast_run.outputs.need_playwright == 'true'
+        env:
+          HEADLESS: "true"
+          WORKERS: "4"
+          CONCURRENCY_PER_WORKER: "12"
+          SEARCH_BATCH_SIZE: "32"
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          EXTRA_ARGS=""
+          if [ "${{ github.event.inputs.send_test_alert }}" = "true" ] && [ "${{ matrix.shard }}" = "1" ]; then
+            EXTRA_ARGS="--send-test-alert"
+          fi
+          node price-monitor.js --playwright --shard ${{ matrix.shard }}/4 --shard-out shard-${{ matrix.shard }}.json $EXTRA_ARGS
+
+      - name: Upload Shard Delta Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}
+          path: shard-${{ matrix.shard }}.json
+          if-no-files-found: ignore
+          retention-days: 1
+
+  merge-and-save:
+    needs: monitor-shard
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Shallow checkout latest main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Download Shard Delta Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: shard-*
+          path: shards
+          merge-multiple: true
+
+      - name: Merge Shards & Push Updated price-data.json
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add price-data.json skus.json
-          if ! git diff --staged --quiet; then
+
+          for attempt in 1 2 3; do
+            node price-monitor.js --merge-shards shards
+            git add price-data.json
+            if git diff --staged --quiet; then
+              echo "No price changes to commit."
+              exit 0
+            fi
             git commit -m "chore: update historical prices and averages"
-            git pull --rebase origin main
-            git push origin main
-          else
-            echo "No price changes to commit."
-          fi
+            if git push origin main; then
+              echo "Pushed updated price-data.json successfully."
+              exit 0
+            fi
+            echo "Push conflict on attempt $attempt — re-syncing shallow origin/main and re-merging shards..."
+            git reset --hard HEAD~1
+            git fetch --depth=1 origin main
+            git reset --hard origin/main
+          done
+          echo "Failed to push after 3 attempts."
+          exit 1
