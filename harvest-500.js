@@ -8,13 +8,29 @@
 // Rule: No price rule; ONLY discount rule > 30% off.
 // ============================================================================
 
-const { chromium } = require("playwright");
 const fs = require("fs");
 const path = require("path");
+const { parseSearchResultHtml } = require("./fetch-worker");
+
+function loadPlaywrightChromium() {
+  try {
+    return require("playwright").chromium;
+  } catch {
+    return null;
+  }
+}
 
 const DEFAULT_TARGET_PER_CATEGORY = 250;
-const MIN_DISCOUNT_PCT = 50; // Discount >= 50% rule (no price rule)
-const CONCURRENCY = 16;
+const MIN_DISCOUNT_PCT = 50; // Prefer Discount >= 50% (fallback to any valid priced SKU)
+const CONCURRENCY = 28;
+const PLAYWRIGHT_CONCURRENCY = 16;
+
+const USER_AGENTS = [
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+];
 
 const CATEGORIES = [
   // ── Original 11 Categories (500 SKUs each preserved) ──────────────────────
@@ -2358,6 +2374,894 @@ const CATEGORIES = [
       "men stretchable formal office pants",
     ],
   },
+
+  // ── 25 New High-Volume Categories (+50,000 Unique Products) ───────────────
+  {
+    name: "sarees",
+    target: 2500,
+    queries: [
+      "banarasi silk saree for women wedding",
+      "kanjivaram pure silk saree traditional",
+      "cotton printed daily wear saree women",
+      "georgette party wear sequin saree",
+      "organza floral embroidered saree women",
+      "chiffon lightweight casual saree",
+      "linen handloom zari border saree",
+      "bandhani rajasthani print saree",
+      "patola silk festive saree women",
+      "chanderi silk cotton festive saree",
+      "paithani maharashtrian silk saree",
+      "mysore crepe silk saree women",
+      "tussar bhagalpuri silk saree",
+      "sambalpuri handloom cotton saree",
+      "kota doria lightweight summer saree",
+      "tant bengali cotton handloom saree",
+      "maheshwari silk cotton saree",
+      "kora organza tissue silk saree",
+      "net embroidered bridal reception saree",
+      "satin silk solid plain party saree",
+      "ready to wear pre draped pleated saree",
+      "velvet border winter wedding saree",
+      "kalamkari printed cotton silk saree",
+      "pochampally ikat handloom saree",
+      "mirror work navratri festive saree",
+      "black sequin cocktail party saree",
+      "red bridal zari work wedding saree",
+      "pastel floral summer organza saree",
+      "banarasi soft lichi silk saree",
+      "chikankari lucknowi georgette saree",
+      "saree with unstitched designer blouse",
+      "siril mirchi fashion women saree",
+      "anand sarees akhilam women silk saree",
+      "mimosa kanchipuram silk saree women",
+    ],
+  },
+  {
+    name: "kurtis & kurta sets",
+    target: 2500,
+    queries: [
+      "women cotton straight kurti daily wear",
+      "women anarkali flared kurta set dupatta",
+      "women embroidered kurta palazzo set",
+      "women chikankari lucknowi rayon kurti",
+      "women festive silk kurta pant dupatta set",
+      "women short kurti top for jeans cotton",
+      "women a line printed office wear kurti",
+      "women sharara kurta dupatta wedding set",
+      "women bandhani printed jaipuri kurta set",
+      "women alia cut flared anarkali kurta",
+      "women nyra cut embroidered kurta set",
+      "women velvet winter embroidered kurta set",
+      "women woolen winter warm kurti set",
+      "women chanderi silk festive kurta set",
+      "women muslin silk printed kurta pant set",
+      "women georgette sequence party kurta set",
+      "women kaftan style printed cotton kurti",
+      "women feeding maternity nursing kurti",
+      "women sleeveless summer cotton kurti",
+      "women collar neck formal office kurti",
+      "biba women cotton kurta set",
+      "w for woman straight printed kurta",
+      "aurelia women festive kurta set",
+      "libas women embroidered kurta pant set",
+      "janasya women cotton anarkali kurta",
+      "indo era women silk blend kurta set",
+      "gosriki women cotton blend kurta set",
+      "rangita women printed rayon kurti",
+      "anouk sangria women ethnic kurta set",
+      "varanga vbuyz women festive kurta set",
+      "women pakistani style heavy kurta set",
+      "women mirror work navratri kurti",
+      "women indigo block print cotton kurti",
+      "women white embroidered chikankari kurti",
+    ],
+  },
+  {
+    name: "womens footwear",
+    target: 2500,
+    queries: [
+      "women block heels party wear sandals",
+      "women wedges platform comfortable sandals",
+      "women flat casual daily wear sandals",
+      "women ethnic jutti mojari embroidered",
+      "women kolhapuri chappal flat leather",
+      "women ballerina belly formal office shoes",
+      "women loafers moccasins slip on shoes",
+      "women white casual fashion sneakers",
+      "women lightweight walking running shoes",
+      "women stiletto pointed toe party heels",
+      "women kitten low heel formal sandals",
+      "women orthopedic soft doctor slippers",
+      "women waterproof flip flops sliders",
+      "women ankle chelsea leather boots",
+      "women mules backless formal flats",
+      "women bridal golden silver wedge heels",
+      "women gladiator strappy summer sandals",
+      "women chunky platform dad sneakers",
+      "metro women heels sandals flats",
+      "mochi women ethnic party sandals",
+      "bata women formal bellies sandals",
+      "catwalk inc 5 women stylish heels",
+      "marc loire shoetopia women heels flats",
+      "skechers women walking memory foam shoes",
+      "puma adidas women casual sneakers",
+      "campus sparx asian women sports shoes",
+      "crocs women clogs waterproof sandals",
+      "clarks hush puppies women comfort shoes",
+      "allen solly van heusen women heels",
+      "street style store women boots heels",
+      "women transparent clear strap heels",
+      "women memory foam ortho house slippers",
+      "women winter fur lined warm boots",
+      "women canvas lace up casual sneakers",
+    ],
+  },
+  {
+    name: "mens footwear",
+    target: 2500,
+    queries: [
+      "men casual chunky white sneakers",
+      "men suede leather driving loafers",
+      "men penny tassel slip on loafers",
+      "men leather formal derby oxford shoes",
+      "men monk strap formal leather shoes",
+      "men chelsea suede ankle leather boots",
+      "men high top lace up street sneakers",
+      "men trekking hiking waterproof boots",
+      "men leather casual sandals floaters",
+      "men sports velcro outdoor sandals",
+      "men orthopedic soft cushion slippers",
+      "men athletic pool flip flops sliders",
+      "men waterproof garden clogs sandals",
+      "men ethnic wedding jutti mojari",
+      "men canvas lace up casual shoes",
+      "men boat deck casual leather shoes",
+      "men steel toe industrial safety shoes",
+      "men badminton non marking court shoes",
+      "men football turf studs cleats shoes",
+      "men cricket rubber spikes sports shoes",
+      "woodland men leather boots sandals",
+      "red tape men sneakers formal shoes",
+      "bata hush puppies men formal leather shoes",
+      "clarks lee cooper men leather boots",
+      "sparx campus asian men sandals sneakers",
+      "puma adidas reebok men casual sneakers",
+      "skechers men slip in walking shoes",
+      "us polo assn men casual sneakers loafers",
+      "louis stitch ruosh men leather shoes",
+      "crocs birkenstock men clogs sliders",
+      "neeman bacca bucci men sneakers boots",
+      "liberty centellino men formal casual shoes",
+      "men memory foam slip on walking shoes",
+      "men breathable mesh gym training shoes",
+    ],
+  },
+  {
+    name: "handbags & wallets",
+    target: 2500,
+    queries: [
+      "women stylish sling crossbody bag",
+      "women large tote shopper handbag",
+      "women bridal clutch evening party purse",
+      "women ethnic embroidered potli bag",
+      "women zip around leather wallet purse",
+      "women satchel structured shoulder bag",
+      "women hobo soft slouchy handbag",
+      "women mini backpack stylish casual",
+      "women bucket drawstring shoulder bag",
+      "women quilted chain strap sling bag",
+      "women combo set of 3 handbags",
+      "women makeup cosmetic travel pouch bag",
+      "men genuine leather bi fold wallet",
+      "men rfid blocking slim leather wallet",
+      "men pop up metal card holder wallet",
+      "men zip around clutch travel wallet",
+      "men leather passport holder organizer",
+      "men waist fanny pack chest sling bag",
+      "lavie women handbag sling wallet",
+      "caprese women tote satchel handbag",
+      "baggit women cruelty free handbag",
+      "zouk women vegan leather tote sling bag",
+      "miraggio women stylish shoulder handbag",
+      "lino perros women clutch tote handbag",
+      "exotic mammon women handbag combo",
+      "wildhorn urban forest men leather wallet",
+      "tommy hilfiger titan men leather wallet",
+      "hide & skin contacts men leather wallet",
+      "da milano hidesign women leather wallet",
+      "fossil guess aldo women sling wallet",
+      "dailyobjects women tote pouch wallet",
+      "fastrack allen solly women sling bag",
+      "van heusen peter england men wallet",
+      "women jute canvas printed tote bag",
+    ],
+  },
+  {
+    name: "kids clothing",
+    target: 2500,
+    queries: [
+      "boys cotton printed t shirt pack",
+      "boys casual denim jeans pants",
+      "boys formal party blazer suit set",
+      "boys ethnic silk kurta pyjama set",
+      "boys cotton shorts joggers pack",
+      "boys winter puffer jacket hoodie",
+      "boys casual checked cotton shirt",
+      "boys night suit pajama cotton set",
+      "girls party wear net frock dress",
+      "girls cotton summer casual frock dress",
+      "girls ethnic lehenga choli festive set",
+      "girls kurta palazzo ethnic set",
+      "girls t shirt leggings coord set",
+      "girls denim jeans jeggings pants",
+      "girls winter cardigan sweater jacket",
+      "girls cotton night suit pajama set",
+      "baby boy newborn cotton romper onesie",
+      "baby girl newborn frock gift clothing set",
+      "toddler kids woolen thermal innerwear",
+      "kids waterproof rain coat poncho",
+      "hopscotch boys girls party dress set",
+      "allen solly junior boys shirts t shirts",
+      "us polo assn kids boys polo jeans",
+      "max kids boys girls cotton clothing",
+      "marks spencer kids dresses t shirts",
+      "gini and jony kids denim jackets",
+      "pantaloons junior kids ethnic casual",
+      "babyhug firstcry kids cotton clothing",
+      "cutecumber girls party gown dress",
+      "tiber taber boys girls ethnic kurta",
+      "kids school uniform sweater trousers",
+      "kids swimming costume swimwear set",
+      "boys sports jersey football cricket set",
+      "girls tutu ballet skirt top set",
+    ],
+  },
+  {
+    name: "mobile accessories",
+    target: 2500,
+    queries: [
+      "iphone 16 15 magsafe back cover case",
+      "samsung galaxy s24 s25 back cover case",
+      "oneplus 12 13 nord shockproof back cover",
+      "redmi note realme transparent armor case",
+      "tempered glass screen protector privacy",
+      "camera lens protector metal ring iphone",
+      "gan 65w 45w 33w fast wall charger adapter",
+      "20w pd type c fast charger iphone",
+      "braided usb c to c 100w fast cable",
+      "mfi certified lightning cable iphone",
+      "3 in 1 magnetic wireless charging stand",
+      "car dashboard magnetic mobile holder mount",
+      "adjustable aluminum desktop phone stand",
+      "bluetooth selfie stick tripod with light",
+      "mobile gaming cooling fan semiconductor",
+      "gaming finger sleeves trigger controller",
+      "usb c otg adapter card reader mobile",
+      "waterproof mobile pouch underwater cover",
+      "phone lanyard crossbody neck strap",
+      "magsafe magnetic wallet card holder",
+      "spigen phone back cover tempered glass",
+      "ringke esr iphone samsung magsafe case",
+      "dailyobjects designer phone cover case",
+      "anker belkin fast charger cable mobile",
+      "stuffcool ambrane portronics charger cable",
+      "boat duracell braided charging cable",
+      "apple original adapter cable accessory",
+      "samsung 25w 45w original travel adapter",
+      "car fast charger dual port 65w pd",
+      "phone grip pop socket ring holder",
+      "cleaning kit mobile earbuds screen spray",
+      "smartwatch silicone leather metal strap",
+      "airpods earbuds silicone protective case",
+      "ipad tablet folio keyboard flip cover",
+    ],
+  },
+  {
+    name: "kitchen storage & containers",
+    target: 2500,
+    queries: [
+      "airtight kitchen storage containers set plastic",
+      "borosilicate glass storage jars bamboo lid",
+      "stainless steel masala dabba spice box",
+      "insulated stainless steel lunch box tiffin",
+      "electric heated tiffin lunch box office",
+      "thermosteel vacuum insulated water bottle 1l",
+      "copper water bottle hammered 1 litre",
+      "glass oil dispenser bottle leakproof",
+      "fridge storage organizer boxes vegetables",
+      "stainless steel dish drying rack kitchen",
+      "modular kitchen storage trolley 4 tier",
+      "grain rice flour storage drum container",
+      "rotating spice rack carousel 16 jar",
+      "magnetic fridge side organizer rack",
+      "under sink expandable storage rack",
+      "bread box wooden metal kitchen counter",
+      "tea coffee sugar canister jar set",
+      "silicone collapsible food storage container",
+      "milton insulated tiffin bottle casserole",
+      "cello airtight containers water bottle",
+      "borosil glass lunch box storage jars",
+      "signoraware modular plastic lunch container",
+      "tupperware airtight kitchen container bottle",
+      "nayasa femora kitchen storage container",
+      "lock and lock airtight glass container",
+      "solimo amazon basics kitchen jars",
+      "insulated travel coffee tumbler mug sipper",
+      "kids leakproof bento lunch box bottle",
+      "dry fruit serving tray airtight box",
+      "stainless steel milk can oil dispenser",
+      "pickle ceramic barni jar set",
+      "pantry pull out basket kitchen organizer",
+      "cutlery holder spoon stand countertop",
+      "fruit vegetable mesh basket stand",
+    ],
+  },
+  {
+    name: "books & novels",
+    target: 2000,
+    queries: [
+      "bestseller self help personal development book",
+      "fiction mystery thriller crime novel paperback",
+      "contemporary romance love story novel book",
+      "indian author fiction novel bestseller",
+      "personal finance investing stock market book",
+      "business startup entrepreneurship management book",
+      "biography autobiography memoir hardcover book",
+      "science fiction fantasy epic novel trilogy",
+      "classic world literature paperback box set",
+      "psychology philosophy human behavior book",
+      "indian history mythology non fiction book",
+      "upsc civil services ias preparation books",
+      "jee main advanced physics chemistry math book",
+      "neet ug biology medical entrance book",
+      "cat gmat gre quantitative aptitude book",
+      "ssc banking railway competitive exam book",
+      "programming python java system design book",
+      "children illustrated story books box set",
+      "kids encyclopedia general knowledge atlas",
+      "manga anime comic book box set",
+      "graphic novel comic book hardcover",
+      "hindi literature upanyas novel books",
+      "spiritual meditation bhagavad gita book",
+      "indian cooking baking recipe cookbook",
+      "health nutrition fitness diet book",
+      "parenting child psychology guide book",
+      "english grammar vocabulary spoken book",
+      "poetry collection hardcover gift book",
+      "penguin random house bestseller fiction",
+      "harpercollins bloomsbury paperback novel",
+    ],
+  },
+  {
+    name: "kitchen tools & gadgets",
+    target: 2000,
+    queries: [
+      "stainless steel chef knife set with block",
+      "wooden bamboo teak chopping cutting board",
+      "vegetable chopper manual pull string cutter",
+      "stainless steel mandoline slicer grater",
+      "silicone cooking spatula ladle utensil set",
+      "wooden marble chakla belan rolling pin",
+      "heavy duty mortar pestle imamdasta okhli",
+      "stainless steel mixing bowls nesting set",
+      "digital kitchen food weighing scale grams",
+      "stainless steel oil strainer colander mesh",
+      "garlic press ginger crusher kitchen tool",
+      "measuring cups spoons stainless steel set",
+      "non stick cake baking tin mould set",
+      "silicone baking mat oven gloves mitts",
+      "electric milk frother egg beater whisk",
+      "pizza cutter wheel kitchen scissors shears",
+      "manual citrus lemon juicer squeezer",
+      "ice cream scoop potato masher stainless",
+      "tea infuser strainer mesh ball stainless",
+      "oil brush silicone basting pastry set",
+      "prestige pigeon kitchen tools knife set",
+      "victorinox bergner chef knife kitchen",
+      "ganesh solimo vegetable chopper slicer",
+      "borosil meyer kitchen bakeware tools",
+      "kitchen sink strainer drain basket",
+      "gas lighter stainless steel rechargeable",
+      "apron cotton kitchen waterproof pockets",
+      "roti basket wooden casserole cloth",
+      "stainless steel tongs pakkad chimta",
+      "butter dish cheese grater kitchen gadget",
+    ],
+  },
+  {
+    name: "home organization & storage",
+    target: 2000,
+    queries: [
+      "wardrobe clothes organizer foldable storage",
+      "underbed blanket saree storage bag zipper",
+      "foldable laundry basket hamper with lid",
+      "non slip velvet wooden clothes hangers set",
+      "modular plastic drawer chest storage unit",
+      "acrylic makeup cosmetic vanity organizer",
+      "vacuum compression storage bags clothes",
+      "stackable clear plastic storage boxes lid",
+      "over the door hanging coat towel hooks",
+      "rolling 3 tier metal utility storage cart",
+      "jewellery organizer box velvet travel case",
+      "watch box organizer glass top 12 slots",
+      "sunglasses eyewear organizer display tray",
+      "saree cover organizer non woven set",
+      "bra underwear socks drawer divider box",
+      "toy storage organizer bins rack kids",
+      "wall mounted broom mop holder rack",
+      "stainless steel foldable cloth drying stand",
+      "ironing board foldable heavy duty stand",
+      "dustbin pedal sensor trash can home",
+      "house of quirk storage organizer bag",
+      "kuber industries saree wardrobe organizer",
+      "cello nilkamal plastic storage cabinet",
+      "urban space laundry basket organizer",
+      "bamboo woven storage basket hamper",
+      "cable wire management organizer box",
+      "medicine first aid storage organizer box",
+      "shoe box clear magnetic stackable",
+      "remote control desk caddy organizer",
+      "hanging closet shelf 6 tier fabric",
+    ],
+  },
+  {
+    name: "bedding & pillows",
+    target: 2000,
+    queries: [
+      "orthopedic memory foam cervical pillow",
+      "microfiber soft sleeping pillows set of 2",
+      "contour neck pain relief gel pillow",
+      "cotton velvet decorative cushion covers 16x16",
+      "microfiber cushion fillers inserts set of 5",
+      "cotton reversible ac dohar double bed",
+      "all season microfiber comforter quilt double",
+      "heavy winter woollen mink blanket double",
+      "knitted cotton sofa throw blanket boho",
+      "waterproof terry cotton mattress protector",
+      "satin silk anti frizz pillowcase cover",
+      "memory foam travel neck pillow airplane",
+      "full body maternity pregnancy u pillow",
+      "wedge acid reflux elevation pillow foam",
+      "cotton bolster cylinder pillow with cover",
+      "velvet quilted sofa slipcover protector",
+      "cotton diwan set 8 pieces living room",
+      "fitted elastic mattress topper king queen",
+      "wakefit sleepyhead memory foam pillow",
+      "recron certified microfiber pillow set",
+      "story@home cortina cushion covers comforter",
+      "spaces bombay dyeing dohar blanket",
+      "trident swayam cotton bedding cushion",
+      "haus kinder divine casa comforter set",
+      "cooling bamboo shredded memory foam pillow",
+      "floor meditation large square seating cushion",
+      "kids bolster pillow cartoon bedding set",
+      "chair seat pad tie on dining cushion",
+      "mosquito net foldable king size double bed",
+      "weighted anxiety glass bead blanket",
+    ],
+  },
+  {
+    name: "lighting & lamps",
+    target: 2000,
+    queries: [
+      "bedside ceramic fabric table lamp warm",
+      "modern standing corner floor lamp living room",
+      "rechargeable led study desk reading lamp",
+      "wall sconce antique brass bedroom lamp",
+      "led ceiling panel flush mount light 18w",
+      "warm white fairy copper string lights",
+      "motion sensor rechargeable cabinet led light",
+      "3d moon crystal ball galaxy night lamp",
+      "solar waterproof outdoor garden pathway lamp",
+      "industrial hanging pendant cage ceiling light",
+      "vintage edison filament warm led bulb",
+      "rgb sunset projection ambient floor lamp",
+      "emergency rechargeable inverter led bulb",
+      "cob led recessed downlight spotlight ceiling",
+      "mirror front vanity led bathroom wall light",
+      "touch dimmable cordless restaurant table lamp",
+      "bamboo rattan boho woven hanging lamp",
+      "philips wipro led ceiling bulb batten",
+      "syska havells orient led panel tube light",
+      "homesake crosscut floor table lamp",
+      "led strip light 5m waterproof rgb remote",
+      "clip on book reading flexible led lamp",
+      "plug in automatic twilight night bulb",
+      "gate pillar outdoor waterproof glass lamp",
+      "salt rock himalayan healing table lamp",
+      "track light rail spotlight showroom led",
+      "festival curtain waterfall led string light",
+      "smart dimming led ceiling fan light",
+      "kids silicone cute animal night lamp",
+      "mosquito killer uv led lamp trap",
+    ],
+  },
+  {
+    name: "stationery & art supplies",
+    target: 2000,
+    queries: [
+      "ruled unruled hardcover journal diary notebook",
+      "2026 daily weekly planner organizer diary",
+      "fine tip gel rollerball pens pack",
+      "luxury fountain pen ink converter gift",
+      "acrylic paint tubes set 24 36 shades",
+      "watercolor cake tubes brush artist set",
+      "oil pastel soft pastel artist drawing set",
+      "stretched cotton canvas boards painting set",
+      "heavyweight 300gsm watercolor sketchbook pad",
+      "colored pencils 48 72 shades artist tin",
+      "dual tip alcohol markers brush pen set",
+      "graphite charcoal sketching pencils kit",
+      "wooden tabletop tripod painting easel stand",
+      "epoxy resin art starter kit moulds",
+      "calligraphy dip pen nib ink set",
+      "polymer air dry sculpting clay tools",
+      "origami craft paper scrapbook sticker kit",
+      "large vegan leather desk mat blotter",
+      "wooden acrylic pen stand desk organizer",
+      "scientific geometry mathematical drawing set",
+      "camlin kokuyo art supplies paint sketchbook",
+      "faber castell colour pencils markers",
+      "brustro artist sketchbooks paints brushes",
+      "staedtler micron fineliner drafting pens",
+      "classmate uniball pilot pens notebooks",
+      "parker cross pierre cardin gift pen",
+      "solo document expanding folder file",
+      "sticky notes index tabs highlighter set",
+      "heavy duty stapler punch scissor office",
+      "electric pencil sharpener desk vacuum",
+    ],
+  },
+  {
+    name: "makeup & cosmetics",
+    target: 2000,
+    queries: [
+      "matte liquid transferproof lipstick women",
+      "hydrating tinted lip gloss balm oil",
+      "full coverage liquid foundation matte spf",
+      "high coverage dark circle concealer",
+      "oil control compact setting face powder",
+      "shimmer matte eyeshadow palette 18 shades",
+      "waterproof smudgeproof eyeliner kajal",
+      "volumizing lengthening waterproof mascara",
+      "cream powder cheek blush tint",
+      "illuminating liquid powder face highlighter",
+      "pore minimizing matte makeup primer",
+      "long lasting dewy makeup setting spray",
+      "contour bronzer sculpting palette",
+      "eyebrow pencil pomade gel definer",
+      "gel matte nail polish manicure kit",
+      "micellar water cleansing balm makeup remover",
+      "soft makeup brushes beauty blender sponge",
+      "maybelline new york lipstick foundation mascara",
+      "lakme absolute 9 to 5 makeup cosmetics",
+      "loreal paris infallible foundation lipstick",
+      "sugar cosmetics matte lipstick kajal blush",
+      "swiss beauty eyeshadow primer concealer",
+      "mars cosmetics lip liner palette",
+      "colorbar faces canada foundation compact",
+      "insight cosmetics concealer primer gloss",
+      "renee mamaearth kay beauty makeup",
+      "false eyelashes magnetic glue kit",
+      "bb cc cream tinted moisturizer spf",
+      "makeup vanity box organizer led mirror",
+      "bridal complete makeup combo gift kit",
+    ],
+  },
+  {
+    name: "haircare & personal care",
+    target: 2000,
+    queries: [
+      "anti hair fall sulfate free shampoo",
+      "anti dandruff ketoconazole scalp shampoo",
+      "keratin smoothing hydrating hair conditioner",
+      "deep conditioning hair spa mask cream",
+      "argan frizz control shine hair serum",
+      "rosemary bhringraj onion hair growth oil",
+      "heat protectant hair spray leave in cream",
+      "strong hold matte hair wax clay pomade",
+      "moisturizing exfoliating body wash shower gel",
+      "deep nourishing shea cocoa body lotion",
+      "coffee walnut exfoliating body scrub",
+      "long lasting body mist deodorant spray",
+      "underarm roll on aha bha brightening",
+      "men beard growth oil wash balm softener",
+      "electric rechargeable sonic toothbrush heads",
+      "water flosser oral irrigator cordless",
+      "men 5 blade safety cartridge razor kit",
+      "women sensitive body hair removal razor",
+      "wooden neem wide tooth detangling comb",
+      "loofah bath brush silicone scalp massager",
+      "loreal paris tresemme shampoo serum mask",
+      "dove nivea vaseline body wash lotion",
+      "mamaearth wow skin science haircare",
+      "plum minimalist pilgrim haircare bodycare",
+      "bare anatomy wishcare hair growth serum",
+      "gillette oral b colgate grooming oral care",
+      "the man company ustraa beard body care",
+      "mcaffeine body scrub wash butter",
+      "forest essentials kama ayurveda personal care",
+      "hand foot crack repair cream manicure kit",
+    ],
+  },
+  {
+    name: "fitness & gym accessories",
+    target: 2000,
+    queries: [
+      "heavy duty resistance bands tubes set",
+      "weighted speed skipping jump rope",
+      "padded gym workout gloves wrist support",
+      "compression knee sleeves elbow wraps gym",
+      "weightlifting leather lever powerlifting belt",
+      "leakproof protein shaker bottle steel",
+      "ab roller wheel core workout knee mat",
+      "push up board bars home chest workout",
+      "adjustable hand grip forearm strengthener",
+      "cast iron neoprene kettlebell 8kg 12kg",
+      "adjustable ankle wrist weights velcro",
+      "high density foam roller muscle recovery",
+      "gym duffle bag with shoe compartment",
+      "doorway chin up pull up bar home",
+      "battle rope gymnastic rings suspension trainer",
+      "aerobic stepper balance board stability ball",
+      "dip belt weight lifting wrist straps",
+      "yoga block cork stretching strap wheel",
+      "boldfit gym accessories shaker gloves bands",
+      "strauss nivia gym fitness workout gear",
+      "kobo aurion weightlifting belt gloves",
+      "lifelong cultsport home fitness accessories",
+      "badminton shuttlecock feather nylon pack",
+      "tennis cricket leather practice ball",
+      "basketball volleyball air pump needle",
+      "athletic kinesiology sports tape",
+      "massage lacrosse spiky recovery ball",
+      "speed agility ladder cones training kit",
+      "sweat waist trimmer sauna slimming belt",
+      "smart jump rope digital counter fitness",
+    ],
+  },
+  {
+    name: "automotive bike accessories",
+    target: 2000,
+    queries: [
+      "waterproof bike two wheeler body cover",
+      "motorcycle handlebar waterproof mobile mount",
+      "gel comfort motorcycle touring seat cushion",
+      "bike chain lube cleaner brush maintenance kit",
+      "motorcycle led fog light projector switch",
+      "bike disc brake alarm anti theft lock",
+      "motorcycle heavy duty bungee cargo net",
+      "microfiber 800gsm car bike cleaning cloth",
+      "car ceramic coating liquid wax polish",
+      "high foam ph neutral car wash shampoo",
+      "car dashboard solar perfume air freshener",
+      "magnetic car window sunshade windshield cover",
+      "car leather seat cleaner conditioner spray",
+      "tubeless tyre puncture repair tool kit",
+      "car trunk boot foldable storage organizer",
+      "car blind spot convex side mirror",
+      "car door edge guard bumper protector strip",
+      "car steering wheel leather stitched cover",
+      "motorcycle handlebar grip bar end mirror",
+      "bike waterproof rain gear riding suit",
+      "3m motul car bike care polish lube",
+      "wavex turtle wax car detailing kit",
+      "grandpitstop bobo bike mount puncture kit",
+      "autofurnish vista car cover mat care",
+      "car trash bin cup holder phone mount",
+      "car scratch remover rubbing compound polish",
+      "car battery trickle charger 12v smart",
+      "motorcycle tank pad sticker knee grip",
+      "reflective safety vest warning triangle car",
+      "car key fob silicone leather cover",
+    ],
+  },
+  {
+    name: "kids toys & learning",
+    target: 1500,
+    queries: [
+      "soft plush teddy bear animal toy kids",
+      "superhero action figures playset kids",
+      "fashion doll set accessories playhouse",
+      "kids pretend kitchen cooking doctor playset",
+      "wooden jigsaw puzzles kids 3 5 8 years",
+      "montessori wooden alphabet numbers blocks",
+      "musical dancing light up baby toddler toy",
+      "lcd writing drawing doodle board tablet",
+      "non toxic playdough slime craft clay kit",
+      "family strategy card board games uno",
+      "kids plastic cricket football sports kit",
+      "baby floating bath toys water squirt",
+      "diecast metal pull back toy cars set",
+      "remote control robot dinosaur toy kids",
+      "play tent house castle indoor kids",
+      "funskool frank puzzles board games",
+      "fisher price mattel hasbro kids toys",
+      "skillmatics einstein box learning kit",
+      "smartivity stem diy wooden science toy",
+      "rubik cube speed cube brain teaser",
+      "kids karaoke singing microphone toy",
+      "wooden abacus counting math toy",
+      "bubble gun automatic machine outdoor toy",
+      "flash cards early learning baby toddler",
+    ],
+  },
+  {
+    name: "womens innerwear & loungewear",
+    target: 1500,
+    queries: [
+      "women cotton printed night suit pajama set",
+      "women long cotton maxi nighty gown",
+      "women high impact padded sports bra",
+      "women seamless t shirt everyday wirefree bra",
+      "women cotton hipster bikini briefs pack",
+      "women cotton spaghetti camisole slip pack",
+      "women tummy tucker high waist shapewear",
+      "women winter thermal innerwear top bottom",
+      "women satin silk bridal robe nightwear",
+      "women cotton t shirt shorts loungewear set",
+      "women maternity feeding nursing bra",
+      "women strapless push up lace bralette",
+      "jockey women bra briefs nightwear",
+      "enamor clovia women bras night suit",
+      "zivame van heusen women innerwear",
+      "marks spencer triumph women bras panties",
+      "sweet dreams juliet women nightwear",
+      "women seamless cycling anti chafing shorts",
+      "women ankle no show cotton socks pack",
+      "women winter fleece warm pyjama set",
+      "women kimono kaftan loungewear dress",
+      "women ribbed seamless workout sports bra",
+      "women full coverage minimizer cotton bra",
+      "women bamboo breathable panties pack",
+    ],
+  },
+  {
+    name: "mens innerwear & loungewear",
+    target: 1500,
+    queries: [
+      "men cotton trunks boxer briefs pack",
+      "men woven cotton relaxed boxer shorts",
+      "men combed cotton vests undershirts pack",
+      "men cotton lounge pajama pants pockets",
+      "men cotton knit sleep shorts loungewear",
+      "men t shirt pajama night suit set",
+      "men winter thermal top bottom warmer set",
+      "men athletic cushioned ankle crew socks",
+      "men modal ultra soft anti roll trunks",
+      "men cotton formal dress socks pack",
+      "men pure cotton handkerchiefs gift box",
+      "jockey men briefs trunks vests socks",
+      "damensch xyxx men modal trunks boxers",
+      "van heusen us polo men innerwear lounge",
+      "levis pepe jeans men trunks socks",
+      "marks spencer puma men innerwear socks",
+      "men fleece winter warm pyjama pants",
+      "men breathable mesh athletic boxer briefs",
+      "men sleeveless gym muscle tank vest",
+      "men no show loafer invisible socks",
+      "men compression inner shorts gym",
+      "men bamboo antibacterial trunks vests",
+      "men checked flannel winter pajama pants",
+      "men woollen winter thermal socks pack",
+    ],
+  },
+  {
+    name: "electronics cables & adapters",
+    target: 1500,
+    queries: [
+      "hdmi 2.1 8k 4k braided display cable",
+      "displayport 1.4 gaming monitor cable",
+      "usb c hub multiport hdmi ethernet adapter",
+      "cat6 cat7 cat8 gigabit ethernet lan cable",
+      "ergonomic aluminum foldable laptop stand",
+      "rgb multi fan laptop cooling pad stand",
+      "waterproof padded laptop sleeve 15.6 inch",
+      "spike guard surge protector extension cord",
+      "3.5mm aux audio braided stereo cable",
+      "bluetooth 5.3 audio transmitter receiver",
+      "usb 3.0 sd microsd memory card reader",
+      "hdmi to vga type c display adapter",
+      "universal travel power plug adapter",
+      "kvm switch hdmi splitter 4k 60hz",
+      "ugreen cablecreation hdmi usb c hub",
+      "amazon basics honeywell extension hdmi cable",
+      "portronics zebronics laptop stand usb hub",
+      "tp link belkin ethernet adapter hub",
+      "usb c magnetic adapter 100w right angle",
+      "optical toslink digital audio cable",
+      "xlr microphone audio cable shielded",
+      "laptop power adapter charger 65w type c",
+      "cable sleeve zipper spiral wire organizer",
+      "external usb cd dvd rw optical drive",
+    ],
+  },
+  {
+    name: "bath linen & towels",
+    target: 1500,
+    queries: [
+      "100% cotton 500gsm 600gsm bath towel large",
+      "bamboo super absorbent soft bath towel",
+      "cotton hand face towel set of 6",
+      "microfiber quick dry hair wrap turban",
+      "luxury terry cotton bathrobe men women",
+      "waterproof mould resistant shower curtain",
+      "memory foam anti slip bathroom floor mat",
+      "diatomite quick dry stone bath mat",
+      "oversized striped cotton beach pool towel",
+      "kids hooded cotton animal bath towel",
+      "ceramic glass liquid soap dispenser set",
+      "wall mounted toothbrush paste holder",
+      "trident cotton bath hand towel set",
+      "spaces bombay dyeing luxury bath towels",
+      "raymond home wakefit cotton bath towel",
+      "story@home solimo bath mat towel set",
+      "turkish cotton waffle weave bath towel",
+      "gym microfiber quick dry sweat towel",
+      "guest washcloth face napkin pack 12",
+      "bathrobe waffle spa unisex hotel robe",
+      "bamboo slatted wooden bathroom duckboard",
+      "stainless steel soap dish caddy shower",
+      "cotton bath sheet jumbo extra large",
+      "hotel white luxury combed cotton towel",
+    ],
+  },
+  {
+    name: "baby care & nursery",
+    target: 1250,
+    queries: [
+      "baby diaper pants overnight absorption",
+      "alcohol free 99% water baby wet wipes",
+      "anti colic glass ppsu baby feeding bottle",
+      "silicone baby sippy cup suction bowl set",
+      "gentle tear free baby wash shampoo lotion",
+      "100% organic cotton muslin swaddle wrap",
+      "baby bedding mattress set mosquito net",
+      "bpa free silicone baby teether rattle set",
+      "baby nail clipper grooming healthcare kit",
+      "felt portable diaper caddy nursery basket",
+      "pampers huggies mamypoko baby diapers",
+      "sebamed cetaphil himalaya baby skincare",
+      "chicco luvlap mee mee baby feeding care",
+      "baby hooded towel washcloth organic set",
+      "reusable washable cloth baby diapers",
+      "baby waterproof dry sheet changing mat",
+      "baby ergonomic head shaping pillow",
+      "baby nail trimmer electric safe file",
+      "bottle cleaning brush rack sterilizer",
+      "baby bath tub foldable with thermometer",
+      "baby safety corner guards drawer locks",
+      "baby wooden crib mobile hanging toy",
+    ],
+  },
+  {
+    name: "luggage & travel accessories",
+    target: 1250,
+    queries: [
+      "travel duffle weekender bag gym overnight",
+      "compression packing cubes luggage organizer",
+      "hanging waterproof toiletry cosmetic bag",
+      "memory foam travel neck pillow eye mask",
+      "rfid blocking family passport wallet organizer",
+      "tsa approved combination luggage padlock",
+      "digital hanging luggage weighing scale 50kg",
+      "silicone luggage bag tags airport set",
+      "clear waterproof shoe pouches travel bag",
+      "foldable lightweight packable daypack",
+      "waist money belt hidden travel pouch",
+      "electronic tech cable travel organizer pouch",
+      "safari wildcraft skybags duffle travel bag",
+      "mokobara uppercase assembly travel accessories",
+      "house of quirk packing cubes toiletry bag",
+      "expandable foldable rolling duffle suitcase",
+      "garment suit carrier foldable travel bag",
+      "travel silicone leakproof refillable bottles",
+      "luggage protective elastic suitcase cover",
+      "portable digital door lock travel safety",
+      "travel pill organizer weekly medicine box",
+      "inflatable footrest pillow flight travel",
+    ],
+  },
 ];
 
 const SORT_ORDERS = [
@@ -2394,8 +3298,150 @@ function loadSkus(skuFile) {
   return { categories: {}, skus: [] };
 }
 
+function parseNum(s) {
+  if (s == null) return null;
+  if (typeof s === "number") return isNaN(s) ? null : s;
+  const cleaned = String(s).replace(/[^\d.]/g, "");
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? null : n;
+}
+
+function compactRecord(record) {
+  if (!record || typeof record !== "object") return record;
+  const rawHist = Array.isArray(record.history) ? record.history : [];
+  const prices = [];
+  for (const h of rawHist) {
+    const p = typeof h === "number" ? h : h?.price;
+    if (p != null && p > 0 && !isNaN(p)) prices.push(p);
+  }
+  const compact = {
+    asin: record.asin,
+    title: record.title,
+    mrp: record.mrp ?? null,
+    currentPrice: record.currentPrice ?? null,
+    averagePrice: record.averagePrice ?? null,
+    medianPrice: record.medianPrice ?? null,
+    minPrice: record.minPrice ?? null,
+    maxPrice: record.maxPrice ?? null,
+    history: prices.slice(-10),
+    lastChecked: record.lastChecked ?? null,
+  };
+  if (record.category) compact.category = record.category;
+  if (record.alertCount) compact.alertCount = record.alertCount;
+  if (record.lastAlertPrice != null) compact.lastAlertPrice = record.lastAlertPrice;
+  if (record.lastAlertAvgPrice != null) compact.lastAlertAvgPrice = record.lastAlertAvgPrice;
+  if (record.lastAlertAt) compact.lastAlertAt = record.lastAlertAt;
+  if (record.samePriceAlertCount) compact.samePriceAlertCount = record.samePriceAlertCount;
+  return compact;
+}
+
+/**
+ * Fast direct-HTTP query to Amazon.in `/s/query` Rush streaming API (zero browser overhead).
+ */
+async function fetchSearchTaskDirectHttp(task, uaIndex = 0, maxRetries = 2) {
+  const url = `https://www.amazon.in/s/query?${task.qs}`;
+  const ua = USER_AGENTS[uaIndex % USER_AGENTS.length];
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 14000);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "User-Agent": ua,
+          Accept: "text/html,*/*",
+          "Accept-Language": "en-IN,en;q=0.9",
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          Origin: "https://www.amazon.in",
+          Referer: "https://www.amazon.in/",
+          "Sec-Fetch-Dest": "empty",
+          "Sec-Fetch-Mode": "cors",
+          "Sec-Fetch-Site": "same-origin",
+        },
+        body: '{"customer-action":"query"}',
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      if (res.status === 503 || res.status === 429 || res.status === 502) {
+        if (attempt < maxRetries) {
+          await new Promise((r) =>
+            setTimeout(r, 600 * (attempt + 1) + Math.floor(Math.random() * 500))
+          );
+          continue;
+        }
+        return [];
+      }
+      if (!res.ok) return [];
+
+      const text = await res.text();
+      const chunks = text.split("&&&");
+      const found = [];
+
+      for (let i = 0; i < chunks.length; i++) {
+        const c = chunks[i].trim();
+        if (!c || !c.includes('"dispatch"')) continue;
+        let arr;
+        try {
+          arr = JSON.parse(c);
+        } catch {
+          continue;
+        }
+        if (!Array.isArray(arr) || arr[0] !== "dispatch") continue;
+        const payload = arr[2];
+        if (!payload || !payload.asin || !payload.html) continue;
+
+        const parsed = parseSearchResultHtml(payload.asin, payload.html, payload.index);
+        const currentPrice =
+          parseNum(parsed.csaPrice) ?? parseNum(parsed.priceText);
+        if (!currentPrice || currentPrice <= 0) continue;
+
+        const mrp = parseNum(parsed.mrpText);
+        let discountPct = null;
+        if (parsed.discountText) {
+          const m = parsed.discountText.match(/(\d+)/);
+          if (m) discountPct = parseFloat(m[1]);
+        }
+        if (mrp && mrp > currentPrice) {
+          const calcPct = ((mrp - currentPrice) / mrp) * 100;
+          if (discountPct == null || calcPct > discountPct) {
+            discountPct = Math.round(calcPct * 10) / 10;
+          }
+        }
+
+        if (task.minDiscountPct > 0) {
+          if (discountPct == null || discountPct < task.minDiscountPct) {
+            continue;
+          }
+        }
+
+        found.push({
+          asin: payload.asin,
+          title: parsed.title || payload.asin,
+          currentPrice,
+          mrp,
+          discountPct,
+        });
+      }
+      return found;
+    } catch {
+      clearTimeout(timer);
+      if (attempt < maxRetries) {
+        await new Promise((r) =>
+          setTimeout(r, 350 * (attempt + 1) + Math.floor(Math.random() * 350))
+        );
+        continue;
+      }
+      return [];
+    }
+  }
+  return [];
+}
+
 async function harvestCategory(
-  page,
+  engine,
   cat,
   existingCategoryMap,
   globalProducts,
@@ -2417,7 +3463,7 @@ async function harvestCategory(
 
   if (collected.size >= targetCount) {
     console.log(
-      `   ⏭️  [${cat.name.padEnd(21)}] Already has ${collected.size}/${targetCount} products`
+      `   ⏭️  [${cat.name.padEnd(28)}] Already has ${collected.size}/${targetCount} products`
     );
     return { skus: [...collected.keys()].slice(0, targetCount), added: 0 };
   }
@@ -2445,7 +3491,7 @@ async function harvestCategory(
   // Priority 2: Unfiltered queries across sort orders (filtered for >=50% in parser)
   for (const sort of SORT_ORDERS.slice(0, 3)) {
     const waveTasks = [];
-    for (let pageNum = 1; pageNum <= 6; pageNum++) {
+    for (let pageNum = 1; pageNum <= 7; pageNum++) {
       for (const q of cat.queries) {
         waveTasks.push({
           qs: `k=${encodeURIComponent(q)}&s=${sort}&page=${pageNum}`,
@@ -2456,11 +3502,10 @@ async function harvestCategory(
     subWaves.push({ label: `all>=50%:${sort}`, tasks: waveTasks });
   }
 
-  // Priority 3: Fallback for niche categories (e.g. vacuum bots / drill machine)
-  // Any valid priced product so historical avg price-drop monitoring covers all real SKUs
+  // Priority 3: Fallback for categories needing deeper inventory — any valid priced SKU
   for (const sort of SORT_ORDERS) {
     const waveTasks = [];
-    for (let pageNum = 1; pageNum <= 6; pageNum++) {
+    for (let pageNum = 1; pageNum <= 7; pageNum++) {
       for (const q of cat.queries) {
         waveTasks.push({
           qs: `k=${encodeURIComponent(q)}&s=${sort}&page=${pageNum}`,
@@ -2472,6 +3517,9 @@ async function harvestCategory(
   }
 
   let totalQueriesRun = 0;
+  let batchCounter = 0;
+  const batchConcurrency =
+    engine.mode === "http" ? CONCURRENCY : PLAYWRIGHT_CONCURRENCY;
 
   for (const wave of subWaves) {
     if (collected.size >= targetCount) break;
@@ -2481,168 +3529,157 @@ async function harvestCategory(
     let consecutiveZeroRawBatches = 0;
 
     while (collected.size < targetCount && taskIdx < wave.tasks.length) {
-      const batch = wave.tasks.slice(taskIdx, taskIdx + CONCURRENCY);
-      taskIdx += CONCURRENCY;
+      const batch = wave.tasks.slice(taskIdx, taskIdx + batchConcurrency);
+      taskIdx += batchConcurrency;
       totalQueriesRun += batch.length;
+      batchCounter++;
 
-      const batchItems = await page.evaluate(
-        async ({ batchTasks }) => {
-          const parseNum = (s) => {
-            if (!s) return null;
-            const cleaned = String(s).replace(/[^\d.]/g, "");
-            const n = parseFloat(cleaned);
-            return isNaN(n) ? null : n;
-          };
+      let batchItems = [];
+      if (engine.mode === "http") {
+        const resArr = await Promise.all(
+          batch.map((t, idx) =>
+            fetchSearchTaskDirectHttp(t, batchCounter * batchConcurrency + idx)
+          )
+        );
+        batchItems = resArr.flat();
+      } else {
+        batchItems = await engine.page.evaluate(
+          async ({ batchTasks }) => {
+            const parseNumInPage = (s) => {
+              if (!s) return null;
+              const cleaned = String(s).replace(/[^\d.]/g, "");
+              const n = parseFloat(cleaned);
+              return isNaN(n) ? null : n;
+            };
 
-          const parser = new DOMParser();
+            const parser = new DOMParser();
 
-          const fetchOne = async (task) => {
-            try {
-              const res = await fetch(`/s/query?${task.qs}`, {
-                method: "POST",
-                headers: {
-                  Accept: "text/html,*/*",
-                  "Content-Type": "application/json",
-                  "X-Requested-With": "XMLHttpRequest",
-                },
-                body: JSON.stringify({ "customer-action": "query" }),
-                credentials: "include",
-              });
-              if (!res.ok) return [];
-              const text = await res.text();
-              const chunks = text.split("&&&");
-              const found = [];
+            const fetchOne = async (task) => {
+              try {
+                const res = await fetch(`/s/query?${task.qs}`, {
+                  method: "POST",
+                  headers: {
+                    Accept: "text/html,*/*",
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                  },
+                  body: JSON.stringify({ "customer-action": "query" }),
+                  credentials: "include",
+                });
+                if (!res.ok) return [];
+                const text = await res.text();
+                const chunks = text.split("&&&");
+                const found = [];
 
-              for (let i = 0; i < chunks.length; i++) {
-                const c = chunks[i].trim();
-                if (!c) continue;
-                let arr;
-                try {
-                  arr = JSON.parse(c);
-                } catch {
-                  continue;
-                }
-                if (!Array.isArray(arr) || arr[0] !== "dispatch") continue;
-                const payload = arr[2];
-                if (!payload || !payload.asin || !payload.html) continue;
-
-                const doc = parser.parseFromString(payload.html, "text/html");
-                const csaPrice = doc
-                  .querySelector("[data-csa-c-price-to-pay]")
-                  ?.getAttribute("data-csa-c-price-to-pay");
-                const offscreenPrice = doc
-                  .querySelector(
-                    '.a-price:not([data-a-strike="true"]) .a-offscreen'
-                  )
-                  ?.textContent?.trim();
-                const wholePrice = doc
-                  .querySelector(
-                    '.a-price:not([data-a-strike="true"]) .a-price-whole'
-                  )
-                  ?.textContent?.trim();
-
-                const currentPrice =
-                  parseNum(csaPrice) ??
-                  parseNum(offscreenPrice) ??
-                  parseNum(wholePrice);
-                if (!currentPrice || currentPrice <= 0) continue;
-
-                const mrp = parseNum(
-                  doc
-                    .querySelector('.a-price[data-a-strike="true"] .a-offscreen')
-                    ?.textContent?.trim()
-                );
-
-                const priceRecipeText =
-                  doc.querySelector('[data-cy="price-recipe"]')?.textContent ||
-                  doc.body.textContent ||
-                  "";
-                let discountPct = null;
-                let discountText = null;
-
-                const mOff =
-                  priceRecipeText.match(/\((\d+)\s*%\s*off\)/i) ||
-                  priceRecipeText.match(/(\d+)\s*%\s*off/i) ||
-                  priceRecipeText.match(/-\s*(\d+)\s*%/);
-                if (mOff) {
-                  discountPct = parseFloat(mOff[1]);
-                  discountText = `(${Math.round(discountPct)}% off)`;
-                }
-
-                if (mrp && mrp > currentPrice) {
-                  const calcPct = ((mrp - currentPrice) / mrp) * 100;
-                  if (discountPct == null || calcPct > discountPct) {
-                    discountPct = Math.round(calcPct * 10) / 10;
-                  }
-                  if (!discountText) {
-                    discountText = `(${Math.round(calcPct)}% off)`;
-                  }
-                }
-
-                if (task.minDiscountPct > 0) {
-                  if (discountPct == null || discountPct < task.minDiscountPct) {
+                for (let i = 0; i < chunks.length; i++) {
+                  const c = chunks[i].trim();
+                  if (!c) continue;
+                  let arr;
+                  try {
+                    arr = JSON.parse(c);
+                  } catch {
                     continue;
                   }
-                }
+                  if (!Array.isArray(arr) || arr[0] !== "dispatch") continue;
+                  const payload = arr[2];
+                  if (!payload || !payload.asin || !payload.html) continue;
 
-                const h2List = [
-                  ...doc.querySelectorAll('[data-cy="title-recipe"] h2, h2'),
-                ];
-                const titleParts = h2List
-                  .map((el) =>
-                    (
-                      el.getAttribute("aria-label")?.trim() ||
-                      el.textContent?.trim() ||
-                      ""
+                  const doc = parser.parseFromString(payload.html, "text/html");
+                  const csaPrice = doc
+                    .querySelector("[data-csa-c-price-to-pay]")
+                    ?.getAttribute("data-csa-c-price-to-pay");
+                  const offscreenPrice = doc
+                    .querySelector(
+                      '.a-price:not([data-a-strike="true"]) .a-offscreen'
                     )
-                      .replace(/^sponsored\s+ad\s*[-–—:]\s*/i, "")
-                      .trim()
-                  )
-                  .filter(Boolean);
-                const title =
-                  [...new Set(titleParts)].join(" — ") || payload.asin;
+                    ?.textContent?.trim();
+                  const wholePrice = doc
+                    .querySelector(
+                      '.a-price:not([data-a-strike="true"]) .a-price-whole'
+                    )
+                    ?.textContent?.trim();
 
-                const dealBadge =
-                  doc.querySelector(".a-badge-text")?.textContent?.trim() || null;
-                const merchantEl =
-                  doc.querySelector("[data-csa-c-merchant-id]") ||
-                  doc.querySelector('input[name="merchantId"]');
-                const merchantId =
-                  merchantEl?.getAttribute("data-csa-c-merchant-id") ||
-                  merchantEl?.getAttribute("value") ||
-                  null;
-                const imageUrl =
-                  doc.querySelector("img.s-image")?.getAttribute("src") || null;
+                  const currentPrice =
+                    parseNumInPage(csaPrice) ??
+                    parseNumInPage(offscreenPrice) ??
+                    parseNumInPage(wholePrice);
+                  if (!currentPrice || currentPrice <= 0) continue;
 
-                found.push({
-                  asin: payload.asin,
-                  title,
-                  currentPrice,
-                  mrp,
-                  discountPct,
-                  dealBadge,
-                  discountText,
-                  merchantId,
-                  imageUrl,
-                });
+                  const mrp = parseNumInPage(
+                    doc
+                      .querySelector('.a-price[data-a-strike="true"] .a-offscreen')
+                      ?.textContent?.trim()
+                  );
+
+                  const priceRecipeText =
+                    doc.querySelector('[data-cy="price-recipe"]')?.textContent ||
+                    doc.body.textContent ||
+                    "";
+                  let discountPct = null;
+
+                  const mOff =
+                    priceRecipeText.match(/\((\d+)\s*%\s*off\)/i) ||
+                    priceRecipeText.match(/(\d+)\s*%\s*off/i) ||
+                    priceRecipeText.match(/-\s*(\d+)\s*%/);
+                  if (mOff) {
+                    discountPct = parseFloat(mOff[1]);
+                  }
+
+                  if (mrp && mrp > currentPrice) {
+                    const calcPct = ((mrp - currentPrice) / mrp) * 100;
+                    if (discountPct == null || calcPct > discountPct) {
+                      discountPct = Math.round(calcPct * 10) / 10;
+                    }
+                  }
+
+                  if (task.minDiscountPct > 0) {
+                    if (discountPct == null || discountPct < task.minDiscountPct) {
+                      continue;
+                    }
+                  }
+
+                  const h2List = [
+                    ...doc.querySelectorAll('[data-cy="title-recipe"] h2, h2'),
+                  ];
+                  const titleParts = h2List
+                    .map((el) =>
+                      (
+                        el.getAttribute("aria-label")?.trim() ||
+                        el.textContent?.trim() ||
+                        ""
+                      )
+                        .replace(/^sponsored\s+ad\s*[-–—:]\s*/i, "")
+                        .trim()
+                    )
+                    .filter(Boolean);
+                  const title =
+                    [...new Set(titleParts)].join(" — ") || payload.asin;
+
+                  found.push({
+                    asin: payload.asin,
+                    title,
+                    currentPrice,
+                    mrp,
+                    discountPct,
+                  });
+                }
+                return found;
+              } catch {
+                return [];
               }
-              return found;
-            } catch {
-              return [];
-            }
-          };
+            };
 
-          const all = await Promise.all(batchTasks.map((t) => fetchOne(t)));
-          return all.flat();
-        },
-        { batchTasks: batch }
-      );
+            const all = await Promise.all(batchTasks.map((t) => fetchOne(t)));
+            return all.flat();
+          },
+          { batchTasks: batch }
+        );
+      }
 
       if (batchItems.length === 0) {
         consecutiveZeroRawBatches++;
         if (consecutiveZeroRawBatches >= 2) {
-          // Back off briefly if Amazon throttled responses
-          await page.waitForTimeout(2000);
+          await new Promise((r) => setTimeout(r, 1500));
         }
       } else {
         consecutiveZeroRawBatches = 0;
@@ -2653,7 +3690,7 @@ async function harvestCategory(
       for (const item of batchItems) {
         if (collected.size >= targetCount) break;
         if (!collected.has(item.asin) && !usedGlobalAsins.has(item.asin)) {
-          const record = {
+          const record = compactRecord({
             asin: item.asin,
             category: cat.name,
             title: item.title,
@@ -2663,29 +3700,9 @@ async function harvestCategory(
             medianPrice: item.currentPrice,
             minPrice: item.currentPrice,
             maxPrice: item.currentPrice,
-            discountPct: item.discountPct,
-            discountText: item.discountText,
-            dealBadge: item.dealBadge,
-            merchantId: item.merchantId,
-            imageUrl: item.imageUrl,
-            history: [
-              {
-                price: item.currentPrice,
-                mrp: item.mrp,
-                isDeal: Boolean(item.dealBadge),
-                dealBadge: item.dealBadge,
-                merchantId: item.merchantId,
-                timestamp: nowIso,
-              },
-            ],
+            history: [item.currentPrice],
             lastChecked: nowIso,
-            alertCount: 0,
-            lastAlertPrice: null,
-            lastAlertAvgPrice: null,
-            lastAlertAt: null,
-            samePriceAlertCount: 0,
-            firstSeen: nowIso,
-          };
+          });
           collected.set(item.asin, record);
           globalProducts[item.asin] = record;
           usedGlobalAsins.add(item.asin);
@@ -2694,7 +3711,7 @@ async function harvestCategory(
       }
 
       process.stdout.write(
-        `\r   📦 [${cat.name.padEnd(21)}] ${collected.size}/${targetCount} (+${batchAdded}, raw:${batchItems.length}, wave:${wave.label}, q:${totalQueriesRun})   `
+        `\r   📦 [${cat.name.padEnd(28)}] ${collected.size}/${targetCount} (+${batchAdded}, raw:${batchItems.length}, wave:${wave.label}, q:${totalQueriesRun})   `
       );
 
       if (batchAdded < 2) {
@@ -2724,6 +3741,11 @@ async function main() {
   const skuData = loadSkus(skuFile);
   if (!skuData.categories) skuData.categories = {};
 
+  // Compact all existing records in memory so checkpoint writes are fast & lean
+  for (const [asin, prod] of Object.entries(data.products || {})) {
+    data.products[asin] = compactRecord(prod);
+  }
+
   const initialSkuCount = (skuData.skus || []).length;
   const totalTarget = CATEGORIES.reduce(
     (s, c) => s + (c.target || DEFAULT_TARGET_PER_CATEGORY),
@@ -2737,31 +3759,60 @@ async function main() {
   console.log(
     `  🎯 Target: ${totalTarget.toLocaleString("en-IN")} total products (Existing: ${initialSkuCount.toLocaleString("en-IN")})`
   );
-  console.log(`  🏷️  Filter: Prefer Discount >= ${MIN_DISCOUNT_PCT}% (fallback for niche categories)`);
+  console.log(`  🏷️  Filter: Prefer Discount >= ${MIN_DISCOUNT_PCT}% (fallback for high-volume targets)`);
   console.log("═══════════════════════════════════════════════════════════════════\n");
 
-  const context = await chromium.launchPersistentContext(
-    path.join(__dirname, "browser-data"),
-    {
-      headless: true,
-      viewport: { width: 1366, height: 768 },
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      locale: "en-IN",
-      timezoneId: "Asia/Kolkata",
-      args: ["--disable-blink-features=AutomationControlled", "--no-sandbox"],
+  // Probe fast direct HTTP first; fall back to Playwright only if challenged
+  let engine = { mode: "http", page: null, context: null };
+  const forcePlaywright = process.argv.includes("--playwright");
+  if (!forcePlaywright) {
+    console.log("🌐 Probing fast direct HTTP Search API...");
+    const probeItems = await fetchSearchTaskDirectHttp(
+      { qs: "k=saree&page=1", minDiscountPct: 0 },
+      0,
+      1
+    );
+    if (probeItems.length > 0) {
+      console.log(
+        `   ⚡ Direct HTTP Search API OK (${probeItems.length} probe items) — running at ${CONCURRENCY}x concurrency without browser!\n`
+      );
+    } else {
+      console.warn(
+        "   ⚠️  Direct HTTP probe returned 0 items — falling back to Playwright browser...\n"
+      );
+      engine.mode = "playwright";
     }
-  );
+  } else {
+    engine.mode = "playwright";
+  }
 
-  const page = context.pages()[0] || (await context.newPage());
-
-  try {
-    console.log("🌐 Connecting to Amazon.in Search API...");
-    await page.goto("https://www.amazon.in/", {
+  if (engine.mode === "playwright") {
+    const chromium = loadPlaywrightChromium();
+    if (!chromium) {
+      throw new Error("Playwright is not available for fallback mode.");
+    }
+    engine.context = await chromium.launchPersistentContext(
+      path.join(__dirname, "browser-data"),
+      {
+        headless: true,
+        viewport: { width: 1366, height: 768 },
+        userAgent: USER_AGENTS[0],
+        locale: "en-IN",
+        timezoneId: "Asia/Kolkata",
+        args: ["--disable-blink-features=AutomationControlled", "--no-sandbox"],
+      }
+    );
+    engine.page = engine.context.pages()[0] || (await engine.context.newPage());
+    console.log("🌐 Connecting to Amazon.in via Playwright...");
+    await engine.page.goto("https://www.amazon.in/", {
       waitUntil: "domcontentloaded",
       timeout: 30000,
     });
+  }
 
+  const startMs = Date.now();
+
+  try {
     // Pre-reserve ALL existing ASINs across ALL existing categories so no category
     // ever steals an ASIN from another category and every added SKU is genuinely new.
     const usedGlobalAsins = new Set();
@@ -2779,7 +3830,7 @@ async function main() {
     for (let i = 0; i < CATEGORIES.length; i++) {
       const cat = CATEGORIES[i];
       const { skus: catSkus, added } = await harvestCategory(
-        page,
+        engine,
         cat,
         skuData.categories,
         data.products,
@@ -2797,24 +3848,23 @@ async function main() {
         data.lastRun = new Date().toISOString();
         data.runCount = (data.runCount || 0) + 1;
         fs.writeFileSync(dataFile, JSON.stringify(data), "utf-8");
+        const elapsedSec = ((Date.now() - startMs) / 1000).toFixed(1);
         console.log(
-          `   💾 Checkpoint saved — Total unique SKUs: ${skuData.skus.length.toLocaleString("en-IN")} (+${totalAdded.toLocaleString("en-IN")} new this run)`
+          `   💾 Checkpoint saved (${elapsedSec}s) — Total unique SKUs: ${skuData.skus.length.toLocaleString("en-IN")} (+${totalAdded.toLocaleString("en-IN")} new this run)`
         );
       }
     }
 
+    const totalSec = ((Date.now() - startMs) / 1000).toFixed(1);
     console.log("\n═══════════════════════════════════════════════════════════════════");
     console.log(
-      `  🎉 Harvest Complete! Total Categories: ${CATEGORIES.length} | Total Unique SKUs: ${skuData.skus.length.toLocaleString("en-IN")} (+${totalAdded.toLocaleString("en-IN")} new)`
+      `  🎉 Harvest Complete in ${totalSec}s! Total Categories: ${CATEGORIES.length} | Total Unique SKUs: ${skuData.skus.length.toLocaleString("en-IN")} (+${totalAdded.toLocaleString("en-IN")} new)`
     );
-    for (const cat of CATEGORIES) {
-      console.log(
-        `     • ${cat.name.padEnd(22)}: ${(skuData.categories[cat.name] || []).length} SKUs`
-      );
-    }
     console.log("═══════════════════════════════════════════════════════════════════\n");
   } finally {
-    await context.close();
+    if (engine.context) {
+      await engine.context.close();
+    }
   }
 }
 

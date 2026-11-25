@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
 
     steps:
       - name: Shallow checkout repository
@@ -40,7 +40,7 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Run Fast Multithreaded Price Monitor (Shard ${{ matrix.shard }}/4)
+      - name: Run Fast Multithreaded Price Monitor (Shard ${{ matrix.shard }}/8)
         id: fast_run
         env:
           WORKERS: "4"
@@ -48,13 +48,15 @@ jobs:
           SEARCH_BATCH_SIZE: "32"
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MID_DISCOUNT_TELEGRAM_CHAT_ID: ${{ secrets.MID_DISCOUNT_TELEGRAM_CHAT_ID }}
+          HIGH_DISCOUNT_TELEGRAM_CHAT_ID: ${{ secrets.HIGH_DISCOUNT_TELEGRAM_CHAT_ID }}
         run: |
           EXTRA_ARGS=""
           if [ "${{ github.event.inputs.send_test_alert }}" = "true" ] && [ "${{ matrix.shard }}" = "1" ]; then
             EXTRA_ARGS="--send-test-alert"
           fi
           set +e
-          node price-monitor.js --shard ${{ matrix.shard }}/4 --shard-out shard-${{ matrix.shard }}.json $EXTRA_ARGS
+          node price-monitor.js --shard ${{ matrix.shard }}/8 --shard-out shard-${{ matrix.shard }}.json $EXTRA_ARGS
           EXIT_CODE=$?
           set -e
           if [ $EXIT_CODE -eq 42 ]; then
@@ -82,7 +84,7 @@ jobs:
             npx playwright install-deps chromium
           fi
 
-      - name: Run Price Monitor via Playwright Fallback (Shard ${{ matrix.shard }}/4)
+      - name: Run Price Monitor via Playwright Fallback (Shard ${{ matrix.shard }}/8)
         if: steps.fast_run.outputs.need_playwright == 'true'
         env:
           HEADLESS: "true"
@@ -91,12 +93,14 @@ jobs:
           SEARCH_BATCH_SIZE: "32"
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MID_DISCOUNT_TELEGRAM_CHAT_ID: ${{ secrets.MID_DISCOUNT_TELEGRAM_CHAT_ID }}
+          HIGH_DISCOUNT_TELEGRAM_CHAT_ID: ${{ secrets.HIGH_DISCOUNT_TELEGRAM_CHAT_ID }}
         run: |
           EXTRA_ARGS=""
           if [ "${{ github.event.inputs.send_test_alert }}" = "true" ] && [ "${{ matrix.shard }}" = "1" ]; then
             EXTRA_ARGS="--send-test-alert"
           fi
-          node price-monitor.js --playwright --shard ${{ matrix.shard }}/4 --shard-out shard-${{ matrix.shard }}.json $EXTRA_ARGS
+          node price-monitor.js --playwright --shard ${{ matrix.shard }}/8 --shard-out shard-${{ matrix.shard }}.json $EXTRA_ARGS
 
       - name: Upload Shard Delta Artifact
         if: always()

@@ -8,4 +8,6 @@ scratch/
 mcp_config.json
 playwright-mcp.config.json
 *.log
+flipkart-price-errors/
+
 

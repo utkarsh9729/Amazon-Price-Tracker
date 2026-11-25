@@ -52,6 +52,19 @@ const CONFIG = {
     process.env.TELEGRAM_BOT_TOKEN ||
     "5420527489:AAE1F1DDhqaiUHCu-kHauFfqhgEhOlG0aMI",
   telegramChatId: process.env.TELEGRAM_CHAT_ID || "-1002197097024",
+  // Dedicated tiered Telegram groups by discount level:
+  //   >= 70% -> midDiscountTelegramChatId (-5530445395)
+  //   >  90% -> highDiscountTelegramChatId (-5284268372)
+  midDiscountTelegramChatId:
+    process.env.MID_DISCOUNT_TELEGRAM_CHAT_ID || "-5530445395",
+  midDiscountMinPercent: parseFloat(
+    process.env.MID_DISCOUNT_MIN_PERCENT || "70"
+  ),
+  highDiscountTelegramChatId:
+    process.env.HIGH_DISCOUNT_TELEGRAM_CHAT_ID || "-5284268372",
+  highDiscountMinPercent: parseFloat(
+    process.env.HIGH_DISCOUNT_MIN_PERCENT || "90"
+  ),
 
   // Discount rule ONLY (all price thresholds/rules removed):
   // Alert ONLY when discount is strictly > 50%
@@ -133,21 +146,40 @@ function loadData() {
 }
 
 /**
+ * Compact a product record before persisting to price-data.json so 100k+ SKUs
+ * stay well under GitHub's file-size limits while preserving all pricing/alert state.
+ */
+function compactProductRecord(product) {
+  if (!product || typeof product !== "object") return product;
+  const prices = extractHistoryPrices(product.history).slice(-CONFIG.maxHistoryEntries);
+  const compact = {
+    asin: product.asin,
+    title: product.title,
+    mrp: product.mrp ?? null,
+    currentPrice: product.currentPrice ?? null,
+    averagePrice: product.averagePrice ?? null,
+    medianPrice: product.medianPrice ?? null,
+    minPrice: product.minPrice ?? null,
+    maxPrice: product.maxPrice ?? null,
+    history: prices,
+    lastChecked: product.lastChecked ?? null,
+  };
+  if (product.category) compact.category = product.category;
+  if (product.alertCount) compact.alertCount = product.alertCount;
+  if (product.lastAlertPrice != null) compact.lastAlertPrice = product.lastAlertPrice;
+  if (product.lastAlertAvgPrice != null) compact.lastAlertAvgPrice = product.lastAlertAvgPrice;
+  if (product.lastAlertAt) compact.lastAlertAt = product.lastAlertAt;
+  if (product.samePriceAlertCount) compact.samePriceAlertCount = product.samePriceAlertCount;
+  return compact;
+}
+
+/**
  * Save updated price data to JSON file.
  */
 function saveData(data) {
   if (data && data.products) {
-    for (const product of Object.values(data.products)) {
-      if (Array.isArray(product.history)) {
-        if (product.history.length > CONFIG.maxHistoryEntries) {
-          product.history = product.history.slice(-CONFIG.maxHistoryEntries);
-        }
-        // Keep history entries lean ({ price, timestamp }) so 50k+ SKUs stay well under GitHub size limits
-        product.history = product.history.map((h) => ({
-          price: h.price,
-          timestamp: h.timestamp,
-        }));
-      }
+    for (const [asin, product] of Object.entries(data.products)) {
+      data.products[asin] = compactProductRecord(product);
     }
   }
   data.lastRun = new Date().toISOString();
@@ -184,11 +216,26 @@ function saveSkus(skuData) {
 }
 
 /**
+ * Extract numeric prices from history entries (supports both compact number[]
+ * and legacy { price, timestamp }[] formats).
+ */
+function extractHistoryPrices(history) {
+  if (!Array.isArray(history) || history.length === 0) return [];
+  const prices = [];
+  for (const h of history) {
+    const p = typeof h === "number" ? h : h?.price;
+    if (p != null && p > 0 && !isNaN(p)) {
+      prices.push(p);
+    }
+  }
+  return prices;
+}
+
+/**
  * Calculate arithmetic mean price from history entries.
  */
 function calculateAverage(history) {
-  if (!history || history.length === 0) return null;
-  const prices = history.map((h) => h.price).filter((p) => p != null && p > 0);
+  const prices = extractHistoryPrices(history);
   if (prices.length === 0) return null;
   const avg = prices.reduce((sum, p) => sum + p, 0) / prices.length;
   return Math.round(avg * 100) / 100;
@@ -198,11 +245,7 @@ function calculateAverage(history) {
  * Calculate median price from history entries.
  */
 function calculateMedian(history) {
-  if (!history || history.length === 0) return null;
-  const prices = history
-    .map((h) => h.price)
-    .filter((p) => p != null && p > 0)
-    .sort((a, b) => a - b);
+  const prices = extractHistoryPrices(history).sort((a, b) => a - b);
   if (prices.length === 0) return null;
   const mid = Math.floor(prices.length / 2);
   const med =
@@ -216,8 +259,7 @@ function calculateMedian(history) {
  * Calculate min and max prices from history entries.
  */
 function calculateMinMax(history) {
-  if (!history || history.length === 0) return { min: null, max: null };
-  const prices = history.map((h) => h.price).filter((p) => p != null && p > 0);
+  const prices = extractHistoryPrices(history);
   if (prices.length === 0) return { min: null, max: null };
   return {
     min: Math.min(...prices),
@@ -332,15 +374,16 @@ function evaluateRepeatAlertThrottle(
 // ─── Telegram Notification ──────────────────────────────────────────────────
 
 /**
- * Send an HTML message to the configured Telegram chat/group.
+ * Send an HTML message to a configured Telegram chat/group.
  */
-function sendTelegram(message) {
+function sendTelegram(message, targetChatId = CONFIG.telegramChatId) {
   return new Promise((resolve, reject) => {
+    const chatId = targetChatId || CONFIG.telegramChatId;
     if (
       !CONFIG.telegramBotToken ||
       CONFIG.telegramBotToken === "YOUR_BOT_TOKEN_HERE" ||
-      !CONFIG.telegramChatId ||
-      CONFIG.telegramChatId === "YOUR_CHAT_ID_HERE"
+      !chatId ||
+      chatId === "YOUR_CHAT_ID_HERE"
     ) {
       console.log("\n📱 [Telegram Alert Preview — set TELEGRAM_BOT_TOKEN & TELEGRAM_CHAT_ID to send live]:");
       console.log(message.replace(/<[^>]+>/g, ""));
@@ -348,7 +391,7 @@ function sendTelegram(message) {
     }
 
     const payload = JSON.stringify({
-      chat_id: CONFIG.telegramChatId,
+      chat_id: chatId,
       text: message,
       parse_mode: "HTML",
       disable_web_page_preview: false,
@@ -373,8 +416,8 @@ function sendTelegram(message) {
       res.on("data", (chunk) => (body += chunk));
       res.on("end", () => {
         if (res.statusCode === 200) {
-          console.log("✅ Telegram alert sent successfully.");
-          resolve({ sent: true });
+          console.log(`✅ Telegram alert sent successfully (chat: ${chatId}).`);
+          resolve({ sent: true, chatId });
         } else if (res.statusCode === 429) {
           let retryAfter = 35;
           try {
@@ -383,9 +426,18 @@ function sendTelegram(message) {
           } catch {}
           console.log(`⏳ Telegram rate limit (429) — waiting ${retryAfter}s and retrying...`);
           setTimeout(() => {
-            sendTelegram(message).then(resolve).catch(reject);
+            sendTelegram(message, chatId).then(resolve).catch(reject);
           }, retryAfter * 1000);
         } else {
+          let migratedId = null;
+          try {
+            const parsed = JSON.parse(body);
+            migratedId = parsed?.parameters?.migrate_to_chat_id || null;
+          } catch {}
+          if (migratedId && String(migratedId) !== String(chatId)) {
+            console.log(`🔄 Telegram group migrated to supergroup ${migratedId} — retrying...`);
+            return sendTelegram(message, String(migratedId)).then(resolve).catch(reject);
+          }
           console.error("❌ Telegram API error:", res.statusCode, body);
           reject(new Error(`Telegram ${res.statusCode}: ${body}`));
         }
@@ -400,6 +452,31 @@ function sendTelegram(message) {
     req.write(payload);
     req.end();
   });
+}
+
+/**
+ * Resolve target Telegram chat IDs for a given discount percentage:
+ *   - >  90% -> highDiscountTelegramChatId (-5284268372)
+ *   - >= 70% -> midDiscountTelegramChatId  (-5530445395)
+ *   - >= 50% -> telegramChatId             (-1002197097024)
+ */
+function resolveAlertChatIds(dropPct) {
+  const chats = [];
+  const addChat = (id) => {
+    if (!id) return;
+    const s = String(id).trim();
+    if (s && s !== "YOUR_CHAT_ID_HERE" && !chats.includes(s)) {
+      chats.push(s);
+    }
+  };
+  if (dropPct > CONFIG.highDiscountMinPercent) {
+    addChat(CONFIG.highDiscountTelegramChatId);
+  }
+  if (dropPct >= CONFIG.midDiscountMinPercent) {
+    addChat(CONFIG.midDiscountTelegramChatId);
+  }
+  addChat(CONFIG.telegramChatId);
+  return chats;
 }
 
 /**
@@ -891,8 +968,18 @@ async function runMonitor(options = {}) {
     `  ⚡ Engine: ${forcePlaywright ? "Playwright Browser" : `${CONFIG.workerThreads} Worker Threads × ${CONFIG.concurrencyPerWorker} Concurrency (Batch ${CONFIG.searchBatchSize})`}`
   );
   console.log(
-    `  🎯 Discount Rule: > ${CONFIG.minDiscountPercent}% off (No minimum price rule)`
+    `  🎯 Discount Rule: >= ${CONFIG.minDiscountPercent}% off (No minimum price rule)`
   );
+  if (CONFIG.midDiscountTelegramChatId) {
+    console.log(
+      `  🔥 Mid-Discount Group:  >= ${CONFIG.midDiscountMinPercent}% off -> chat ${CONFIG.midDiscountTelegramChatId}`
+    );
+  }
+  if (CONFIG.highDiscountTelegramChatId) {
+    console.log(
+      `  🚨 High-Discount Group: > ${CONFIG.highDiscountMinPercent}% off -> chat ${CONFIG.highDiscountTelegramChatId}`
+    );
+  }
   console.log(
     `  🔕 Repeat Limit: Max ${CONFIG.maxAlertsPerSamePrice} alerts/product until price changes by ≥${CONFIG.minPriceChangePercentForNewAlert}% of avg price`
   );
@@ -1006,10 +1093,7 @@ async function runMonitor(options = {}) {
 
     checkedCount++;
 
-    product.history.push({
-      price: result.currentPrice,
-      timestamp: result.scrapedAt,
-    });
+    product.history.push(result.currentPrice);
 
     if (product.history.length > CONFIG.maxHistoryEntries) {
       product.history = product.history.slice(-CONFIG.maxHistoryEntries);
@@ -1028,13 +1112,14 @@ async function runMonitor(options = {}) {
     // ── Detect Price Error (Only Discount Rule >= 50%; No Price Rule) ──
     let isError = false;
     let errorReason = "";
+    let dropPctNum = 0;
 
     if (
       comparisonAvg != null &&
       comparisonAvg > 0 &&
       priorCount + 1 >= CONFIG.minDataPointsForAlert
     ) {
-      const dropPctNum = ((comparisonAvg - cur) / comparisonAvg) * 100;
+      dropPctNum = ((comparisonAvg - cur) / comparisonAvg) * 100;
       if (dropPctNum >= CONFIG.minDiscountPercent) {
         const dropPct = dropPctNum.toFixed(1);
         isError = true;
@@ -1112,6 +1197,7 @@ async function runMonitor(options = {}) {
           minMax,
           reason: errorReason,
           alertNumber: effectiveAlertNum,
+          dropPct: dropPctNum,
         });
       }
     }
@@ -1119,7 +1205,7 @@ async function runMonitor(options = {}) {
     // so flickering Buy Box sellers cannot reset the max-3 repeat notification cap.
 
     if (shardOut) {
-      updatedProducts[asin] = product;
+      updatedProducts[asin] = compactProductRecord(product);
     }
   }
 
@@ -1168,11 +1254,33 @@ async function runMonitor(options = {}) {
     console.log(`\n📱 Sending ${alerts.length} price error alert(s) to Telegram...`);
     for (const alert of alerts) {
       const msg = buildAlertMessage(alert);
-      try {
-        await sendTelegram(msg);
-        await new Promise((r) => setTimeout(r, 400));
-      } catch (err) {
-        console.error("   ❌ Failed to send Telegram alert:", err.message);
+      const dropPct =
+        typeof alert.dropPct === "number"
+          ? alert.dropPct
+          : alert.avgPrice && alert.avgPrice > 0
+            ? ((alert.avgPrice - alert.currentPrice) / alert.avgPrice) * 100
+            : 0;
+      const targetChats = resolveAlertChatIds(dropPct);
+      if (dropPct > CONFIG.highDiscountMinPercent && CONFIG.highDiscountTelegramChatId) {
+        console.log(
+          `   🚨 Ultra-high discount (${dropPct.toFixed(1)}% > ${CONFIG.highDiscountMinPercent}%) — routing to chats: ${targetChats.join(", ")}`
+        );
+      } else if (dropPct >= CONFIG.midDiscountMinPercent && CONFIG.midDiscountTelegramChatId) {
+        console.log(
+          `   🔥 High discount (${dropPct.toFixed(1)}% >= ${CONFIG.midDiscountMinPercent}%) — routing to chats: ${targetChats.join(", ")}`
+        );
+      }
+
+      for (const chatId of targetChats) {
+        try {
+          await sendTelegram(msg, chatId);
+          await new Promise((r) => setTimeout(r, 400));
+        } catch (err) {
+          console.error(
+            `   ❌ Failed to send Telegram alert to ${chatId}:`,
+            err.message
+          );
+        }
       }
     }
   } else {
@@ -1431,6 +1539,7 @@ module.exports = {
   runMonitor,
   mergeShardFiles,
   sendTelegram,
+  resolveAlertChatIds,
   loadData,
   loadSkus,
   evaluateRepeatAlertThrottle,
